@@ -3,7 +3,7 @@ import { Waves, Mountain, Building2 } from "lucide-react";
 
 // The user with this email will have admin privileges.
 // You can add more emails to this list.
-export const admins = ['admin@example.com', 'sarah.miller@example.com'];
+export const admins = ['wohltman@gmail.com'];
 
 export const families: Family[] = [
   {
@@ -40,3 +40,4 @@ export const clubLocations: ClubLocation[] = [
   { id: "loc2", name: "The Bluffs", icon: Mountain },
   { id: "loc3", name: "The Upper Deck", icon: Building2 },
 ];
+4

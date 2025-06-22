@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -14,12 +15,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
 
 const InviteSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address." }),
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  email: z.string().email({ message: "Please enter a valid email." }).optional().or(z.literal('')),
 });
 
 type InviteFormValues = z.infer<typeof InviteSchema>;
@@ -27,25 +28,21 @@ type InviteFormValues = z.infer<typeof InviteSchema>;
 interface InviteDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onInvite: (email: string) => void;
+  onInvite: (details: { name: string; email?: string }) => void;
 }
 
 export function InviteDialog({ isOpen, onOpenChange, onInvite }: InviteDialogProps) {
-  const { toast } = useToast();
 
   const form = useForm<InviteFormValues>({
     resolver: zodResolver(InviteSchema),
     defaultValues: {
+      name: "",
       email: "",
     },
   });
   
   const onSubmit = (data: InviteFormValues) => {
-    onInvite(data.email);
-    toast({
-      title: "Invitation Sent!",
-      description: `An invitation has been sent to ${data.email}.`,
-    });
+    onInvite(data);
     form.reset();
     onOpenChange(false);
   };
@@ -54,26 +51,42 @@ export function InviteDialog({ isOpen, onOpenChange, onInvite }: InviteDialogPro
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="font-headline">Invite a Family Member</DialogTitle>
-          <DialogDescription>Enter the email of the person you want to invite to your family.</DialogDescription>
+          <DialogTitle className="font-headline">Add a Family Member</DialogTitle>
+          <DialogDescription>Add a new person to your family. If you provide an email, they'll be invited to join the app.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <FormField
               control={form.control}
-              name="email"
+              name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email Address</FormLabel>
+                  <FormLabel>Full Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="name@example.com" {...field} />
+                    <Input placeholder="e.g., Jane Doe" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email Address (Optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="name@example.com" {...field} />
+                  </FormControl>
+                   <FormDescription>
+                    If provided, an invitation will be sent for them to join via their Google account.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <DialogFooter>
-              <Button type="submit" className="bg-accent hover:bg-accent/90 text-accent-foreground">Send Invitation</Button>
+              <Button type="submit" className="bg-accent hover:bg-accent/90 text-accent-foreground">Add Member</Button>
             </DialogFooter>
           </form>
         </Form>

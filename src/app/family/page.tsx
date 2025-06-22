@@ -12,12 +12,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { InviteDialog } from "@/components/invite-dialog";
 import { cn } from "@/lib/utils";
 import { CreateFamilyDialog } from "@/components/create-family-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 export default function FamilyPage() {
   const { user, family, familyMember, updateFamilyData, signIn, createFamily } = useAuth();
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [isInviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [isCreateFamilyDialogOpen, setCreateFamilyDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (family) {
@@ -25,28 +27,31 @@ export default function FamilyPage() {
     }
   }, [family]);
 
-  const handleInviteMember = (email: string) => {
+  const handleAddMember = ({ name, email }: { name: string; email?: string }) => {
     if (!family) return;
 
     const newMember: FamilyMember = {
       id: `mem${Date.now()}`,
-      name: email, // Placeholder name
-      email: email,
+      name,
+      email: email || "",
       avatarUrl: "https://placehold.co/100x100.png",
       role: 'member',
-      status: 'pending'
+      status: email ? 'pending' : 'active'
     };
     
     const updatedFamily = { ...family, members: [...members, newMember] };
-    setMembers(updatedFamily.members);
     updateFamilyData(updatedFamily);
+
+    toast({
+        title: email ? "Invitation Sent!" : "Member Added!",
+        description: email ? `An invitation has been sent to ${email}.` : `${name} has been added to your family.`,
+    });
   };
 
   const handleRemoveMember = (memberId: string) => {
     if (!family) return;
     const updatedMembers = members.filter(m => m.id !== memberId);
     const updatedFamily = { ...family, members: updatedMembers };
-    setMembers(updatedFamily.members);
     updateFamilyData(updatedFamily);
   };
   
@@ -110,7 +115,7 @@ export default function FamilyPage() {
             </div>
             {isOwner && (
                 <Button onClick={() => setInviteDialogOpen(true)} className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Invite Member
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Member
                 </Button>
             )}
           </div>
@@ -134,8 +139,8 @@ export default function FamilyPage() {
                     {member.name} 
                     {member.role === 'owner' && <Crown className="w-4 h-4 text-amber-500" />}
                 </p>
-                <p className="text-sm text-muted-foreground">{member.email}</p>
-                {member.status === 'pending' && <Badge variant="secondary" className="mt-2">Pending</Badge>}
+                {member.email && <p className="text-sm text-muted-foreground">{member.email}</p>}
+                {member.status === 'pending' && <Badge variant="secondary" className="mt-2">Pending Invitation</Badge>}
               </Card>
             ))}
           </div>
@@ -145,10 +150,9 @@ export default function FamilyPage() {
         <InviteDialog 
             isOpen={isInviteDialogOpen} 
             onOpenChange={setInviteDialogOpen} 
-            onInvite={handleInviteMember}
+            onInvite={handleAddMember}
         />
       )}
     </div>
   );
 }
-

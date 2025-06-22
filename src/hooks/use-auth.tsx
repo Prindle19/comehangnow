@@ -29,67 +29,87 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [familyMember, setFamilyMember] = useState<FamilyMember | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const [families, setFamilies] = useState(initialFamilies);
+  const [families, setFamilies] = useState<Family[]>(initialFamilies);
 
+  // On client-side mount, hydrate `families` state from localStorage
   useEffect(() => {
-    // If firebase is not configured, don't do anything
+    if (typeof window !== 'undefined') {
+      try {
+        const storedFamilies = window.localStorage.getItem('clubconnect_families');
+        if (storedFamilies) {
+          setFamilies(JSON.parse(storedFamilies));
+        }
+      } catch (error) {
+        console.error("Could not load families from localStorage", error);
+      }
+    }
+  }, []);
+
+  // Persist `families` state to localStorage whenever it changes
+  useEffect(() => {
+    // We prevent writing the initial default data to storage before hydration
+    if (families !== initialFamilies) {
+      localStorage.setItem('clubconnect_families', JSON.stringify(families));
+    }
+  }, [families]);
+
+  // Handle Firebase auth state changes
+  useEffect(() => {
     if (!auth) {
         setLoading(false);
         return;
     }
-
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setLoading(true);
-      if (firebaseUser) {
-        setUser(firebaseUser);
-        setIsAdmin(admins.includes(firebaseUser.email || ''));
-
-        let userFamily: Family | null = null;
-        let userFamilyMember: FamilyMember | null = null;
-
-        // Create a mutable copy of families to update status
-        const updatedFamilies = JSON.parse(JSON.stringify(families));
-        let familyDataNeedsUpdate = false;
-        
-        for (const f of updatedFamilies) {
-          const memberIndex = f.members.findIndex((m: FamilyMember) => m.email === firebaseUser.email);
-          if (memberIndex !== -1) {
-            userFamily = f;
-            userFamilyMember = f.members[memberIndex];
-            
-            // Activate pending user
-            if (userFamilyMember.status === 'pending') {
-              f.members[memberIndex].status = 'active';
-              // If name is just an email, update with display name from Google
-              if(f.members[memberIndex].name === firebaseUser.email) {
-                f.members[memberIndex].name = firebaseUser.displayName || firebaseUser.email;
-              }
-              // Update avatar too
-              f.members[memberIndex].avatarUrl = firebaseUser.photoURL || f.members[memberIndex].avatarUrl;
-              familyDataNeedsUpdate = true;
-            }
-            break;
-          }
-        }
-        
-        if (familyDataNeedsUpdate) {
-            setFamilies(updatedFamilies);
-        }
-
-        setFamily(userFamily);
-        setFamilyMember(userFamilyMember);
-
-      } else {
-        setUser(null);
-        setFamily(null);
-        setFamilyMember(null);
-        setIsAdmin(false);
-      }
-      setLoading(false);
+      setUser(firebaseUser); // This will trigger the next effect
     });
-
     return () => unsubscribe();
-  }, [families]);
+  }, []);
+
+  // Update user-specific context (family, roles, etc.) when user or families data changes
+  useEffect(() => {
+    setLoading(true);
+
+    if (!user) {
+      setFamily(null);
+      setFamilyMember(null);
+      setIsAdmin(false);
+      setLoading(false);
+      return;
+    }
+
+    setIsAdmin(admins.includes(user.email || ''));
+
+    let userFamily: Family | null = null;
+    let userFamilyMember: FamilyMember | null = null;
+    let wasFamilyUpdated = false;
+    const familiesCopy = JSON.parse(JSON.stringify(families));
+
+    for (const f of familiesCopy) {
+      const memberIndex = f.members.findIndex((m: FamilyMember) => m.email === user.email);
+      if (memberIndex !== -1) {
+        userFamily = f;
+        userFamilyMember = f.members[memberIndex];
+
+        if (userFamilyMember.status === 'pending') {
+          f.members[memberIndex].status = 'active';
+          if(f.members[memberIndex].name === user.email) {
+            f.members[memberIndex].name = user.displayName || user.email;
+          }
+          f.members[memberIndex].avatarUrl = user.photoURL || f.members[memberIndex].avatarUrl;
+          wasFamilyUpdated = true;
+        }
+        break;
+      }
+    }
+
+    setFamily(userFamily);
+    setFamilyMember(userFamilyMember);
+
+    if (wasFamilyUpdated) {
+      setFamilies(familiesCopy);
+    }
+    setLoading(false);
+  }, [user, families]);
 
   const signIn = async () => {
     if (!auth) {
@@ -100,7 +120,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
         return;
     }
-
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
@@ -150,11 +169,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         members: [newFamilyMember]
     };
     
-    const newFamilies = [...families, newFamily];
-    setFamilies(newFamilies);
-
-    setFamily(newFamily);
-    setFamilyMember(newFamilyMember);
+    setFamilies(prevFamilies => [...prevFamilies, newFamily]);
   };
 
   const value = { user, family, familyMember, isAdmin, loading, signIn, signOut, updateFamilyData, createFamily };
