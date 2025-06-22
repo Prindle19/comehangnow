@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
@@ -17,6 +18,7 @@ interface AuthContextType {
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
   updateFamilyData: (updatedFamily: Family) => void;
+  createFamily: (familyName: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -128,9 +130,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         newFamilies[familyIndex] = updatedFamily;
         setFamilies(newFamilies);
     }
-  }
+  };
 
-  const value = { user, family, familyMember, isAdmin, loading, signIn, signOut, updateFamilyData };
+  const createFamily = (familyName: string) => {
+    if (!user) return;
+
+    const newFamilyMember: FamilyMember = {
+        id: `mem${Date.now()}`,
+        name: user.displayName || user.email || 'New User',
+        email: user.email!,
+        avatarUrl: user.photoURL || "https://placehold.co/100x100.png",
+        role: 'owner',
+        status: 'active'
+    };
+
+    const newFamily: Family = {
+        id: `fam${Date.now()}`,
+        name: familyName,
+        members: [newFamilyMember]
+    };
+    
+    const newFamilies = [...families, newFamily];
+    setFamilies(newFamilies);
+
+    setFamily(newFamily);
+    setFamilyMember(newFamilyMember);
+  };
+
+  const value = { user, family, familyMember, isAdmin, loading, signIn, signOut, updateFamilyData, createFamily };
 
   return (
     <AuthContext.Provider value={value}>

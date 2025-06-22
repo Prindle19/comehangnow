@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -6,15 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { FamilyMember } from "@/lib/types";
-import { PlusCircle, User, Crown, Trash2, LogIn } from "lucide-react";
+import { PlusCircle, User, Crown, Trash2, LogIn, Users } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { InviteDialog } from "@/components/invite-dialog";
 import { cn } from "@/lib/utils";
+import { CreateFamilyDialog } from "@/components/create-family-dialog";
 
 export default function FamilyPage() {
-  const { user, family, familyMember, updateFamilyData, signIn } = useAuth();
+  const { user, family, familyMember, updateFamilyData, signIn, createFamily } = useAuth();
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [isInviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [isCreateFamilyDialogOpen, setCreateFamilyDialogOpen] = useState(false);
 
   useEffect(() => {
     if (family) {
@@ -46,6 +49,11 @@ export default function FamilyPage() {
     setMembers(updatedFamily.members);
     updateFamilyData(updatedFamily);
   };
+  
+  const handleCreateFamily = (name: string) => {
+    createFamily(name);
+    setCreateFamilyDialogOpen(false);
+  };
 
   const isOwner = familyMember?.role === 'owner';
 
@@ -69,15 +77,24 @@ export default function FamilyPage() {
 
   if (!family) {
     return (
-        <div className="container mx-auto p-4 md:p-8">
-            <Card>
+        <div className="container mx-auto p-4 md:p-8 flex items-center justify-center" style={{ minHeight: 'calc(100vh - 250px)' }}>
+            <Card className="w-full max-w-md text-center">
                 <CardHeader>
-                    <CardTitle className="font-headline">No Family Found</CardTitle>
+                    <CardTitle className="font-headline">Create Your Family</CardTitle>
+                    <CardDescription>It looks like you're not part of a family yet.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <p>Your account is not associated with a family. If you've been invited, please make sure you signed in with the correct email. Otherwise, an admin can create a family for you.</p>
+                    <p className="mb-6 text-muted-foreground">Get started by creating a family group. You can invite others to join you afterwards.</p>
+                    <Button onClick={() => setCreateFamilyDialogOpen(true)} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                        <Users className="mr-2 h-5 w-5" /> Create a Family
+                    </Button>
                 </CardContent>
             </Card>
+            <CreateFamilyDialog
+                isOpen={isCreateFamilyDialogOpen}
+                onOpenChange={setCreateFamilyDialogOpen}
+                onCreateFamily={handleCreateFamily}
+            />
         </div>
     );
   }
@@ -134,3 +151,4 @@ export default function FamilyPage() {
     </div>
   );
 }
+
