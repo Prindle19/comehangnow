@@ -44,25 +44,34 @@ const durationOptions = [
 interface CheckInDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  families: Family[];
+  family: Family;
   locations: ClubLocation[];
   onCheckIn: (familyId: string, memberIds: string[], locationIds: string[], durationMinutes: number) => void;
 }
 
-export function CheckInDialog({ isOpen, onOpenChange, families, locations, onCheckIn }: CheckInDialogProps) {
+export function CheckInDialog({ isOpen, onOpenChange, family, locations, onCheckIn }: CheckInDialogProps) {
   const { toast } = useToast();
-  // For this demo, we assume the user belongs to the first family.
-  const myFamily = families[0];
 
   const form = useForm<CheckInFormValues>({
     resolver: zodResolver(CheckInSchema),
     defaultValues: {
-      familyId: myFamily.id,
+      familyId: family.id,
       memberIds: [],
       locationIds: [],
       duration: "90",
     },
   });
+
+  React.useEffect(() => {
+    if (family) {
+        form.reset({
+            familyId: family.id,
+            memberIds: [],
+            locationIds: [],
+            duration: "90",
+        });
+    }
+  }, [family, form]);
   
   const onSubmit = (data: CheckInFormValues) => {
     onCheckIn(data.familyId, data.memberIds, data.locationIds, parseInt(data.duration, 10));
@@ -92,7 +101,7 @@ export function CheckInDialog({ isOpen, onOpenChange, families, locations, onChe
                     <FormLabel className="text-base">Who is going?</FormLabel>
                     <FormDescription>Select all family members checking in.</FormDescription>
                   </div>
-                  {myFamily.members.map((member) => (
+                  {family.members.filter(m => m.status === 'active').map((member) => (
                     <FormField
                       key={member.id}
                       control={form.control}

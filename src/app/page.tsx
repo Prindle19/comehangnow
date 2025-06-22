@@ -2,14 +2,19 @@
 
 import * as React from "react";
 import { CheckIn, ClubLocation, Family } from "@/lib/types";
-import { clubLocations, families } from "@/lib/data";
+import { clubLocations, families as allFamiliesData } from "@/lib/data";
 import { CheckInDialog } from "@/components/check-in-dialog";
 import LocationSection from "@/components/dashboard/location-section";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LogIn } from "lucide-react";
 
 export default function Home() {
+  const { user, family, signIn } = useAuth();
   const [checkIns, setCheckIns] = React.useState<CheckIn[]>([]);
   const [isCheckInDialogOpen, setCheckInDialogOpen] = React.useState(false);
+  const [families, setFamilies] = React.useState(allFamiliesData);
 
   const handleCheckIn = (
     familyId: string,
@@ -27,8 +32,6 @@ export default function Home() {
       checkOutTime: new Date(now.getTime() + durationMinutes * 60000),
     }));
 
-    // For simplicity, we assume one check-in per family can be active across multiple locations.
-    // A more robust solution would handle updates vs. new check-ins.
     const otherFamilyCheckins = checkIns.filter(c => c.familyId !== familyId);
     setCheckIns([...otherFamilyCheckins, ...newCheckIns]);
   };
@@ -39,6 +42,24 @@ export default function Home() {
   
   const handleLeaveAll = (familyId: string) => {
     setCheckIns((prev) => prev.filter((c) => c.familyId !== familyId));
+  }
+
+  if (!user || !family) {
+    return (
+        <div className="container mx-auto p-4 md:p-8 flex items-center justify-center" style={{ minHeight: 'calc(100vh - 150px)' }}>
+            <Card className="w-full max-w-md text-center">
+                <CardHeader>
+                    <CardTitle className="font-headline">Welcome to ClubConnect</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="mb-6 text-muted-foreground">Please sign in to see who's at the club and check in your family.</p>
+                    <Button onClick={signIn} size="lg">
+                        <LogIn className="mr-2 h-5 w-5" /> Sign In with Google
+                    </Button>
+                </CardContent>
+            </Card>
+        </div>
+    );
   }
 
   return (
@@ -66,7 +87,7 @@ export default function Home() {
       <CheckInDialog
         isOpen={isCheckInDialogOpen}
         onOpenChange={setCheckInDialogOpen}
-        families={families}
+        family={family}
         locations={clubLocations}
         onCheckIn={handleCheckIn}
       />
