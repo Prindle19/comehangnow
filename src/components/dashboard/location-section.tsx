@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -11,6 +12,7 @@ interface LocationSectionProps {
   families: Family[];
   onLeave: (checkInId: string) => void;
   onLeaveAll: (familyId: string) => void;
+  currentFamilyId?: string | null;
 }
 
 export default function LocationSection({
@@ -18,7 +20,8 @@ export default function LocationSection({
   checkIns,
   families,
   onLeave,
-  onLeaveAll
+  onLeaveAll,
+  currentFamilyId,
 }: LocationSectionProps) {
   const familiesAtLocation = React.useMemo(() => {
     const familyMap = new Map<string, { family: Family; checkIns: CheckIn[] }>();
@@ -52,6 +55,7 @@ export default function LocationSection({
                 checkIns={checkIns}
                 onLeave={onLeave}
                 onLeaveAll={onLeaveAll}
+                isCurrentUsersFamily={family.id === currentFamilyId}
               />
             ))}
           </div>

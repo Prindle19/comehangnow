@@ -1,5 +1,6 @@
 
 import type { LucideIcon } from "lucide-react";
+import type { Timestamp } from "firebase/firestore";
 
 export type FamilyMember = {
   id: string;
@@ -29,4 +30,9 @@ export type CheckIn = {
   locationId: string;
   checkInTime: Date;
   checkOutTime: Date;
+};
+
+export type FirestoreCheckIn = Omit<CheckIn, 'id' | 'checkInTime' | 'checkOutTime'> & {
+  checkInTime: Timestamp;
+  checkOutTime: Timestamp;
 };

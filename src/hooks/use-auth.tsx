@@ -3,7 +3,8 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { collection, onSnapshot, doc, updateDoc, addDoc, getDocs } from "firebase/firestore";
+import { auth, db } from '@/lib/firebase';
 import { families as initialFamilies, admins } from '@/lib/data';
 import type { Family, FamilyMember } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,6 +13,7 @@ import { toast } from './use-toast';
 interface AuthContextType {
   user: User | null;
   family: Family | null;
+  allFamilies: Family[];
   familyMember: FamilyMember | null;
   isAdmin: boolean;
   loading: boolean;
@@ -26,32 +28,41 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [family, setFamily] = useState<Family | null>(null);
+  const [allFamilies, setAllFamilies] = useState<Family[]>([]);
   const [familyMember, setFamilyMember] = useState<FamilyMember | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const [families, setFamilies] = useState<Family[]>(initialFamilies);
 
-  // On client-side mount, hydrate `families` state from localStorage
+  // Seed initial data if database is empty
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const storedFamilies = window.localStorage.getItem('clubconnect_families');
-        if (storedFamilies) {
-          setFamilies(JSON.parse(storedFamilies));
-        }
-      } catch (error) {
-        console.error("Could not load families from localStorage", error);
+    const seedData = async () => {
+      if (!db) return;
+      const familiesCollection = collection(db, "families");
+      const snapshot = await getDocs(familiesCollection);
+      if (snapshot.empty) {
+        console.log("No families found in Firestore, seeding initial data...");
+        const promises = initialFamilies.map(family => addDoc(familiesCollection, family));
+        await Promise.all(promises);
       }
-    }
+    };
+    seedData();
   }, []);
 
-  // Persist `families` state to localStorage whenever it changes
+  // Listen for changes to families collection in Firestore
   useEffect(() => {
-    // We prevent writing the initial default data to storage before hydration
-    if (families !== initialFamilies) {
-      localStorage.setItem('clubconnect_families', JSON.stringify(families));
+    if (!db) {
+        setLoading(false);
+        return;
     }
-  }, [families]);
+    const familiesCollection = collection(db, "families");
+    const unsubscribe = onSnapshot(familiesCollection, (snapshot) => {
+        const familiesData = snapshot.docs.map(doc => ({ ...doc.data() as Omit<Family, 'id'>, id: doc.id }));
+        setAllFamilies(familiesData);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
 
   // Handle Firebase auth state changes
   useEffect(() => {
@@ -81,35 +92,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     let userFamily: Family | null = null;
     let userFamilyMember: FamilyMember | null = null;
-    let wasFamilyUpdated = false;
-    const familiesCopy = JSON.parse(JSON.stringify(families));
+    
+    const foundFamily = allFamilies.find(f => f.members.some(m => m.email === user.email));
 
-    for (const f of familiesCopy) {
-      const memberIndex = f.members.findIndex((m: FamilyMember) => m.email === user.email);
-      if (memberIndex !== -1) {
-        userFamily = f;
-        userFamilyMember = f.members[memberIndex];
+    if (foundFamily) {
+        userFamily = foundFamily;
+        const member = foundFamily.members.find(m => m.email === user.email);
+        if (member) {
+            userFamilyMember = member;
 
-        if (userFamilyMember.status === 'pending') {
-          f.members[memberIndex].status = 'active';
-          if(f.members[memberIndex].name === user.email) {
-            f.members[memberIndex].name = user.displayName || user.email;
-          }
-          f.members[memberIndex].avatarUrl = user.photoURL || f.members[memberIndex].avatarUrl;
-          wasFamilyUpdated = true;
+            // If user was pending, activate them
+            if (member.status === 'pending') {
+                const updatedMembers = foundFamily.members.map(m => {
+                    if (m.email === user.email) {
+                        return {
+                            ...m,
+                            status: 'active',
+                            name: user.displayName || m.name,
+                            avatarUrl: user.photoURL || m.avatarUrl
+                        };
+                    }
+                    return m;
+                });
+                const updatedFamily = { ...foundFamily, members: updatedMembers };
+                updateFamilyData(updatedFamily);
+            }
         }
-        break;
-      }
     }
 
     setFamily(userFamily);
     setFamilyMember(userFamilyMember);
-
-    if (wasFamilyUpdated) {
-      setFamilies(familiesCopy);
-    }
     setLoading(false);
-  }, [user, families]);
+
+  }, [user, allFamilies]);
 
   const signIn = async () => {
     if (!auth) {
@@ -142,17 +157,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const updateFamilyData = (updatedFamily: Family) => {
-    const familyIndex = families.findIndex(f => f.id === updatedFamily.id);
-    if(familyIndex !== -1) {
-        const newFamilies = [...families];
-        newFamilies[familyIndex] = updatedFamily;
-        setFamilies(newFamilies);
-    }
+  const updateFamilyData = async (updatedFamily: Family) => {
+    if (!db) return;
+    const familyDocRef = doc(db, "families", updatedFamily.id);
+    // We need to strip the `id` from the object before sending it to Firestore.
+    const { id, ...familyData } = updatedFamily;
+    await updateDoc(familyDocRef, familyData);
   };
 
-  const createFamily = (familyName: string) => {
-    if (!user) return;
+  const createFamily = async (familyName: string) => {
+    if (!user || !db) return;
 
     const newFamilyMember: FamilyMember = {
         id: `mem${Date.now()}`,
@@ -163,16 +177,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         status: 'active'
     };
 
-    const newFamily: Family = {
-        id: `fam${Date.now()}`,
+    const newFamily: Omit<Family, 'id'> = {
         name: familyName,
         members: [newFamilyMember]
     };
     
-    setFamilies(prevFamilies => [...prevFamilies, newFamily]);
+    await addDoc(collection(db, "families"), newFamily);
   };
 
-  const value = { user, family, familyMember, isAdmin, loading, signIn, signOut, updateFamilyData, createFamily };
+  const value = { user, family, allFamilies, familyMember, isAdmin, loading, signIn, signOut, updateFamilyData, createFamily };
 
   return (
     <AuthContext.Provider value={value}>

@@ -1,47 +1,76 @@
+
 "use client";
 
 import * as React from "react";
 import { CheckIn, ClubLocation, Family } from "@/lib/types";
-import { clubLocations, families as allFamiliesData } from "@/lib/data";
+import { clubLocations } from "@/lib/data";
 import { CheckInDialog } from "@/components/check-in-dialog";
 import LocationSection from "@/components/dashboard/location-section";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogIn } from "lucide-react";
+import { collection, addDoc, deleteDoc, onSnapshot, Timestamp, doc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export default function Home() {
-  const { user, family, signIn } = useAuth();
+  const { user, family, allFamilies } = useAuth();
   const [checkIns, setCheckIns] = React.useState<CheckIn[]>([]);
   const [isCheckInDialogOpen, setCheckInDialogOpen] = React.useState(false);
-  const [families, setFamilies] = React.useState(allFamiliesData);
 
-  const handleCheckIn = (
+  React.useEffect(() => {
+    if (!db) return;
+    const checkInsCollection = collection(db, "checkins");
+    const unsubscribe = onSnapshot(checkInsCollection, (snapshot) => {
+      const checkInsData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          checkInTime: (data.checkInTime as Timestamp).toDate(),
+          checkOutTime: (data.checkOutTime as Timestamp).toDate(),
+        } as CheckIn
+      });
+      setCheckIns(checkInsData);
+    });
+    return () => unsubscribe();
+  }, []);
+
+
+  const handleCheckIn = async (
     familyId: string,
     memberIds: string[],
     locationIds: string[],
     durationMinutes: number
   ) => {
+    if (!db) return;
     const now = new Date();
-    const newCheckIns: CheckIn[] = locationIds.map((locationId) => ({
-      id: crypto.randomUUID(),
-      familyId,
-      memberIds,
-      locationId,
-      checkInTime: now,
-      checkOutTime: new Date(now.getTime() + durationMinutes * 60000),
-    }));
+    const checkOutTime = new Date(now.getTime() + durationMinutes * 60000);
 
-    const otherFamilyCheckins = checkIns.filter(c => c.familyId !== familyId);
-    setCheckIns([...otherFamilyCheckins, ...newCheckIns]);
+    const checkInPromises = locationIds.map((locationId) => {
+      const newCheckIn = {
+        familyId,
+        memberIds,
+        locationId,
+        checkInTime: Timestamp.fromDate(now),
+        checkOutTime: Timestamp.fromDate(checkOutTime),
+      };
+      return addDoc(collection(db, "checkins"), newCheckIn);
+    });
+
+    await Promise.all(checkInPromises);
   };
 
-  const handleLeave = (checkInId: string) => {
-    setCheckIns((prev) => prev.filter((c) => c.id !== checkInId));
+  const handleLeave = async (checkInId: string) => {
+    if (!db) return;
+    await deleteDoc(doc(db, "checkins", checkInId));
   };
   
-  const handleLeaveAll = (familyId: string) => {
-    setCheckIns((prev) => prev.filter((c) => c.familyId !== familyId));
+  const handleLeaveAll = async (familyId: string) => {
+    if (!db) return;
+    const checkInsToDelete = checkIns.filter(c => c.familyId === familyId);
+    const deletePromises = checkInsToDelete.map(c => deleteDoc(doc(db, "checkins", c.id)));
+    await Promise.all(deletePromises);
   }
 
   if (!user || !family) {
@@ -53,7 +82,7 @@ export default function Home() {
                 </CardHeader>
                 <CardContent>
                     <p className="mb-6 text-muted-foreground">Please sign in to see who's at the club and check in your family.</p>
-                    <Button onClick={signIn} size="lg">
+                    <Button onClick={useAuth().signIn} size="lg">
                         <LogIn className="mr-2 h-5 w-5" /> Sign In with Google
                     </Button>
                 </CardContent>
@@ -77,9 +106,10 @@ export default function Home() {
             key={location.id}
             location={location}
             checkIns={checkIns.filter((c) => c.locationId === location.id)}
-            families={families}
+            families={allFamilies}
             onLeave={handleLeave}
             onLeaveAll={handleLeaveAll}
+            currentFamilyId={family?.id}
           />
         ))}
       </div>

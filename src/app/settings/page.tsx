@@ -5,13 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { families } from "@/lib/data";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, LogIn } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function SettingsPage() {
-  const { user, family, signIn } = useAuth();
+  const { user, family, allFamilies, signIn } = useAuth();
   
   if (!user) {
     return (
@@ -31,7 +30,7 @@ export default function SettingsPage() {
     );
   }
 
-  const otherFamilies = families.filter(f => f.id !== family?.id);
+  const otherFamilies = allFamilies.filter(f => f.id !== family?.id);
 
   return (
     <div className="container mx-auto p-4 md:p-8">

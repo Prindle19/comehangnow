@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -22,9 +23,10 @@ interface CheckedInFamilyCardProps {
   checkIns: CheckIn[];
   onLeave: (checkInId: string) => void;
   onLeaveAll: (familyId: string) => void;
+  isCurrentUsersFamily: boolean;
 }
 
-export default function CheckedInFamilyCard({ family, checkIns, onLeave, onLeaveAll }: CheckedInFamilyCardProps) {
+export default function CheckedInFamilyCard({ family, checkIns, onLeave, onLeaveAll, isCurrentUsersFamily }: CheckedInFamilyCardProps) {
   const [now, setNow] = React.useState(new Date());
 
   React.useEffect(() => {
@@ -39,6 +41,7 @@ export default function CheckedInFamilyCard({ family, checkIns, onLeave, onLeave
   
   const membersPresent = family.members.filter(m => uniqueMemberIds.includes(m.id));
   const earliestCheckOut = React.useMemo(() => {
+    if (checkIns.length === 0) return new Date();
     return new Date(Math.max(...checkIns.map(c => c.checkOutTime.getTime())));
   }, [checkIns]);
 
@@ -83,24 +86,26 @@ export default function CheckedInFamilyCard({ family, checkIns, onLeave, onLeave
         ) : (
             <Badge variant="outline">Time is up</Badge>
         )}
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                    <LogOut className="h-4 w-4" />
-                    Leave
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                {checkIns.map(checkIn => (
-                    <DropdownMenuItem key={checkIn.id} onClick={() => onLeave(checkIn.id)}>
-                        Leave from this location
+        {isCurrentUsersFamily && (
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                        <LogOut className="h-4 w-4" />
+                        Leave
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    {checkIns.map(checkIn => (
+                        <DropdownMenuItem key={checkIn.id} onClick={() => onLeave(checkIn.id)}>
+                            Leave from this location
+                        </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuItem onClick={() => onLeaveAll(family.id)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                        Leave from all locations
                     </DropdownMenuItem>
-                ))}
-                 <DropdownMenuItem onClick={() => onLeaveAll(family.id)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                    Leave from all locations
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        )}
       </CardFooter>
     </Card>
   );
