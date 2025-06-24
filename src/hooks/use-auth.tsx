@@ -2,13 +2,13 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
-import { collection, onSnapshot, doc, updateDoc, addDoc, getDocs } from "firebase/firestore";
+import { User, onAuthStateChanged, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
+import { collection, onSnapshot, doc, updateDoc, addDoc } from "firebase/firestore";
 import { auth, db } from '@/lib/firebase';
-import { families as initialFamilies, admins } from '@/lib/data';
+import { admins } from '@/lib/data';
 import type { Family, FamilyMember } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from './use-toast';
+import { useToast } from './use-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -32,8 +32,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [familyMember, setFamilyMember] = useState<FamilyMember | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const { toast } = useToast();
 
-  // Listen for changes to families collection in Firestore
   useEffect(() => {
     if (!db) {
         setLoading(false);
@@ -45,7 +45,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setAllFamilies(familiesData);
     }, (error) => {
         console.error("Error fetching families:", error);
-        // If we get a permission error, it's likely because the rules aren't set up yet.
         if (error.code === 'permission-denied') {
             toast({
                 variant: "destructive",
@@ -58,31 +57,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
-
-  // Handle Firebase auth state changes
   useEffect(() => {
     if (!auth) {
         setLoading(false);
         return;
     }
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser); // This will trigger the next effect
+      setUser(firebaseUser);
+      if (!firebaseUser) {
+        setLoading(false);
+      }
     });
     return () => unsubscribe();
   }, []);
-
-  // Update user-specific context (family, roles, etc.) when user or families data changes
+  
   useEffect(() => {
-    setLoading(true);
+    if (auth) {
+        getRedirectResult(auth)
+            .catch((error) => {
+                console.error("Error from redirect result:", error);
+                toast({
+                  variant: "destructive",
+                  title: "Sign-in Error",
+                  description: "There was a problem signing you in.",
+                });
+            });
+    }
+  }, [auth, toast]);
 
+  useEffect(() => {
     if (!user) {
       setFamily(null);
       setFamilyMember(null);
       setIsAdmin(false);
-      setLoading(false);
+      // Don't set loading to false here, onAuthStateChanged will handle it
       return;
     }
 
+    setLoading(true);
     setIsAdmin(admins.includes(user.email || ''));
 
     let userFamily: Family | null = null;
@@ -95,22 +107,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const member = foundFamily.members.find(m => m.email === user.email);
         if (member) {
             userFamilyMember = member;
-
-            // If user was pending, activate them
             if (member.status === 'pending') {
-                const updatedMembers = foundFamily.members.map(m => {
-                    if (m.email === user.email) {
-                        return {
-                            ...m,
-                            status: 'active',
-                            name: user.displayName || m.name,
-                            avatarUrl: user.photoURL || m.avatarUrl
-                        };
-                    }
-                    return m;
-                });
-                const updatedFamily = { ...foundFamily, members: updatedMembers };
-                updateFamilyData(updatedFamily);
+                const updatedMembers = foundFamily.members.map(m => 
+                    m.id === member.id 
+                    ? { ...m, status: 'active', name: user.displayName || m.name, avatarUrl: user.photoURL || m.avatarUrl } 
+                    : m
+                );
+                updateFamilyData({ ...foundFamily, members: updatedMembers });
             }
         }
     }
@@ -131,16 +134,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
     }
     const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error("Error during sign-in:", error);
-       toast({
-            variant: "destructive",
-            title: "Sign-in Error",
-            description: "Could not sign in with Google. Check console for details.",
-      });
-    }
+    await signInWithRedirect(auth, provider);
   };
 
   const signOut = async () => {
@@ -155,7 +149,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const updateFamilyData = async (updatedFamily: Family) => {
     if (!db) return;
     const familyDocRef = doc(db, "families", updatedFamily.id);
-    // We need to strip the `id` from the object before sending it to Firestore.
     const { id, ...familyData } = updatedFamily;
     await updateDoc(familyDocRef, familyData);
   };
@@ -184,7 +177,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {loading ? (
+      {loading && !user ? (
          <div className="w-full h-screen flex items-center justify-center">
             <div className="flex flex-col items-center gap-4">
                 <Skeleton className="h-16 w-16 rounded-full" />
