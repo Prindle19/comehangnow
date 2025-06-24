@@ -8,9 +8,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, LogIn } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { admins } from "@/lib/data";
+import { cn } from "@/lib/utils";
 
 export default function SettingsPage() {
-  const { user, family, allFamilies, signIn } = useAuth();
+  const { user, family, allFamilies, signIn, isAdmin } = useAuth();
   
   if (!user) {
     return (
@@ -36,8 +40,9 @@ export default function SettingsPage() {
     <div className="container mx-auto p-4 md:p-8">
       <h1 className="text-3xl font-bold font-headline mb-8">Settings</h1>
       <Tabs defaultValue="notifications" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 md:w-[200px]">
+        <TabsList className={cn("grid w-full grid-cols-1", isAdmin ? "md:grid-cols-2 md:w-auto" : "md:w-[200px]")}>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          {isAdmin && <TabsTrigger value="customization">Club Customization</TabsTrigger>}
         </TabsList>
         
         <TabsContent value="notifications">
@@ -64,6 +69,45 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        
+        {isAdmin && (
+            <TabsContent value="customization">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline">Club Customization</CardTitle>
+                        <CardDescription>
+                            Update your club's branding and settings. Note: Saving these settings is not yet implemented.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="clubName">Club Name</Label>
+                            <Input id="clubName" defaultValue="ClubConnect" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="logo">Club Logo</Label>
+                            <div className="flex items-center gap-4">
+                                <Avatar className="h-16 w-16" data-ai-hint="club logo">
+                                    <AvatarImage src="https://placehold.co/100x100.png" />
+                                    <AvatarFallback>CC</AvatarFallback>
+                                </Avatar>
+                                <Button variant="outline">Upload New Logo</Button>
+                            </div>
+                        </div>
+                        <div className="space-y-4">
+                            <Label>Admin Users</Label>
+                            <CardDescription>
+                                Admins can manage club settings. This list is managed in the file <code>src/lib/data.ts</code>.
+                            </CardDescription>
+                            <ul className="list-disc pl-5 text-sm text-muted-foreground">
+                                {admins.map(email => <li key={email}>{email}</li>)}
+                            </ul>
+                        </div>
+                        <Button disabled className="bg-accent hover:bg-accent/90 text-accent-foreground">Save Changes</Button>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        )}
       </Tabs>
     </div>
   );
