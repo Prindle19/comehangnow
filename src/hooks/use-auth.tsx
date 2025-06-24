@@ -33,21 +33,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Seed initial data if database is empty
-  useEffect(() => {
-    const seedData = async () => {
-      if (!db) return;
-      const familiesCollection = collection(db, "families");
-      const snapshot = await getDocs(familiesCollection);
-      if (snapshot.empty) {
-        console.log("No families found in Firestore, seeding initial data...");
-        const promises = initialFamilies.map(family => addDoc(familiesCollection, family));
-        await Promise.all(promises);
-      }
-    };
-    seedData();
-  }, []);
-
   // Listen for changes to families collection in Firestore
   useEffect(() => {
     if (!db) {
@@ -58,6 +43,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onSnapshot(familiesCollection, (snapshot) => {
         const familiesData = snapshot.docs.map(doc => ({ ...doc.data() as Omit<Family, 'id'>, id: doc.id }));
         setAllFamilies(familiesData);
+    }, (error) => {
+        console.error("Error fetching families:", error);
+        // If we get a permission error, it's likely because the rules aren't set up yet.
+        if (error.code === 'permission-denied') {
+            toast({
+                variant: "destructive",
+                title: "Firestore Permission Denied",
+                description: "Please check your Firestore security rules to allow read access.",
+            });
+        }
     });
 
     return () => unsubscribe();
