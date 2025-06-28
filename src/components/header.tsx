@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Package2, Home, Users, Settings, LogOut, User } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -19,6 +19,10 @@ const navLinks = [
 export function Header() {
   const pathname = usePathname();
   const { user, signIn, signOut, familyMember, clubSettings } = useAuth();
+  
+  const userAvatarUrl = familyMember?.avatarUrl || user?.photoURL;
+  const userAvatarSrc = userAvatarUrl && !userAvatarUrl.includes('placehold.co') ? userAvatarUrl : undefined;
+  const userName = user?.displayName || familyMember?.name || "";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
@@ -58,9 +62,9 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={user.photoURL || familyMember?.avatarUrl} alt={user.displayName || ""} />
+                    <AvatarImage src={userAvatarSrc} alt={userName} />
                     <AvatarFallback>
-                        <User />
+                        {userName ? getInitials(userName) : <User />}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -68,7 +72,7 @@ export function Header() {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                    <p className="text-sm font-medium leading-none">{userName}</p>
                     <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                   </div>
                 </DropdownMenuLabel>

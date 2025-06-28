@@ -10,23 +10,12 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { CheckIn, Family } from '@/lib/types';
+import { getInitials } from '@/lib/utils';
 
 interface CheckedInFamilyCardProps {
   family: Family;
   checkIn: CheckIn;
   isCurrentUsersFamily: boolean;
-}
-
-const getInitials = (name: string) => {
-    const parts = name.split(' ');
-    let initials = '';
-    if (parts.length > 0 && parts[0]) {
-      initials += parts[0][0];
-    }
-    if (parts.length > 1 && parts[parts.length - 1]) {
-      initials += parts[parts.length - 1][0];
-    }
-    return initials.toUpperCase();
 }
 
 export default function CheckedInFamilyCard({ family, checkIn }: CheckedInFamilyCardProps) {
@@ -59,7 +48,7 @@ export default function CheckedInFamilyCard({ family, checkIn }: CheckedInFamily
               <Tooltip key={member.id}>
                 <TooltipTrigger>
                   <Avatar data-ai-hint="person face">
-                    <AvatarImage src={member.avatarUrl} alt={member.name} />
+                    <AvatarImage src={member.avatarUrl && !member.avatarUrl.includes('placehold.co') ? member.avatarUrl : undefined} alt={member.name} />
                     <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
                   </Avatar>
                 </TooltipTrigger>

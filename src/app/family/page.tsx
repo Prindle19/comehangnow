@@ -10,7 +10,7 @@ import { FamilyMember } from "@/lib/types";
 import { PlusCircle, User, Crown, Trash2, LogIn, Users } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { InviteDialog } from "@/components/invite-dialog";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { CreateFamilyDialog } from "@/components/create-family-dialog";
 import { useToast } from "@/hooks/use-toast";
 
@@ -130,9 +130,9 @@ export default function FamilyPage() {
                   </Button>
                 )}
                 <Avatar className="w-24 h-24 mb-4" data-ai-hint="person face">
-                  <AvatarImage src={member.avatarUrl} alt={member.name} />
-                  <AvatarFallback>
-                    <User className="w-12 h-12" />
+                  <AvatarImage src={member.avatarUrl && !member.avatarUrl.includes('placehold.co') ? member.avatarUrl : undefined} alt={member.name} />
+                  <AvatarFallback className="text-3xl">
+                    {getInitials(member.name)}
                   </AvatarFallback>
                 </Avatar>
                 <p className="font-semibold flex items-center gap-2">

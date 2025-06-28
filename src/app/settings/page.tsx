@@ -16,7 +16,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { admins } from "@/lib/data";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -39,16 +39,21 @@ export default function SettingsPage() {
 
   const form = useForm<ClubSettingsFormValues>({
     resolver: zodResolver(ClubSettingsSchema),
-    values: {
-      name: clubSettings.name,
-      logoUrl: clubSettings.logoUrl,
+    defaultValues: {
+        name: "ClubConnect",
+        logoUrl: "",
     },
   });
 
   const logoUrl = form.watch("logoUrl");
 
   React.useEffect(() => {
-    form.reset({ name: clubSettings.name, logoUrl: clubSettings.logoUrl });
+    if (clubSettings) {
+      form.reset({
+        name: clubSettings.name,
+        logoUrl: clubSettings.logoUrl || "",
+      });
+    }
   }, [clubSettings, form]);
 
   const onSubmit = (data: ClubSettingsFormValues) => {
@@ -125,8 +130,8 @@ export default function SettingsPage() {
                 <div key={fam.id} className="flex items-center justify-between p-4 rounded-lg border">
                     <div className="flex items-center space-x-4">
                         <Avatar data-ai-hint="family logo">
-                            <AvatarImage src={`https://placehold.co/100x100.png`} />
-                            <AvatarFallback><User /></AvatarFallback>
+                            <AvatarImage src={undefined} />
+                            <AvatarFallback>{getInitials(fam.name)}</AvatarFallback>
                         </Avatar>
                         <span className="font-medium">{fam.name}</span>
                     </div>
@@ -191,7 +196,7 @@ export default function SettingsPage() {
                             <Label htmlFor="logo">Club Logo</Label>
                             <div className="flex items-center gap-4">
                                 <Avatar className="h-16 w-16" data-ai-hint="club logo">
-                                    <AvatarImage src={logoUrl || clubSettings.logoUrl} />
+                                    <AvatarImage src={logoUrl || undefined} />
                                     <AvatarFallback><Package2 className="h-8 w-8" /></AvatarFallback>
                                 </Avatar>
                                 <Button variant="outline" type="button" onClick={() => fileInputRef.current?.click()}>Upload New Logo</Button>
