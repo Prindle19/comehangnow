@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { CheckIn, Family } from '@/lib/types';
-import { getInitials } from '@/lib/utils';
+import { getFirstName } from '@/lib/utils';
 
 interface CheckedInFamilyCardProps {
   family: Family;
@@ -49,7 +49,7 @@ export default function CheckedInFamilyCard({ family, checkIn }: CheckedInFamily
                 <TooltipTrigger>
                   <Avatar data-ai-hint="person face">
                     <AvatarImage src={member.avatarUrl && !member.avatarUrl.includes('placehold.co') ? member.avatarUrl : undefined} alt={member.name} />
-                    <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+                    <AvatarFallback className="text-xs">{getFirstName(member.name)}</AvatarFallback>
                   </Avatar>
                 </TooltipTrigger>
                 <TooltipContent>

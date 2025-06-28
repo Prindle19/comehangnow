@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Package2, Home, Users, Settings, LogOut, User } from "lucide-react";
-import { cn, getInitials } from "@/lib/utils";
+import { cn, getFirstName } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -63,8 +63,8 @@ export function Header() {
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={userAvatarSrc} alt={userName} />
-                    <AvatarFallback>
-                        {userName ? getInitials(userName) : <User />}
+                    <AvatarFallback className="text-xs">
+                        {userName ? getFirstName(userName) : <User />}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
