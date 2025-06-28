@@ -12,6 +12,7 @@ import { useToast } from './use-toast';
 
 interface ClubSettings {
   name: string;
+  logoUrl?: string;
 }
 
 interface AuthContextType {
@@ -39,7 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [familyMember, setFamilyMember] = useState<FamilyMember | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const [clubSettings, setClubSettings] = useState<ClubSettings>({ name: "ClubConnect" });
+  const [clubSettings, setClubSettings] = useState<ClubSettings>({ name: "ClubConnect", logoUrl: "" });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -65,8 +66,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribeSettings = onSnapshot(settingsDocRef, (doc) => {
         if (doc.exists()) {
             setClubSettings(doc.data() as ClubSettings);
-        } else if (isAdmin) {
-            setDoc(settingsDocRef, { name: "ClubConnect" });
+        } else if (user && admins.includes(user.email || '')) {
+            setDoc(settingsDocRef, { name: "ClubConnect", logoUrl: "" });
         }
     });
 
@@ -75,7 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         unsubscribeFamilies();
         unsubscribeSettings();
     };
-  }, [toast, isAdmin]);
+  }, [toast, user]);
 
   useEffect(() => {
     if (!auth) {
@@ -195,10 +196,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const settingsDocRef = doc(db, "clubSettings", "main");
     try {
         await setDoc(settingsDocRef, newSettings, { merge: true });
-        toast({ title: "Settings updated successfully!" });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error updating settings:", error);
-        toast({ title: "Error updating settings", variant: "destructive" });
+        toast({ title: "Error updating settings", description: error.message, variant: "destructive" });
     }
   };
 

@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, LogIn, Trash2 } from "lucide-react";
+import { User, LogIn, Trash2, Package2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,7 @@ import { AlertDialogTrigger } from '@radix-ui/react-alert-dialog';
 
 const ClubSettingsSchema = z.object({
   name: z.string().min(2, { message: "Club name must be at least 2 characters." }),
+  logoUrl: z.string().optional(),
 });
 
 type ClubSettingsFormValues = z.infer<typeof ClubSettingsSchema>;
@@ -34,20 +35,37 @@ export default function SettingsPage() {
   const { user, family, allFamilies, signIn, isAdmin, clubSettings, updateClubSettings, deleteFamily } = useAuth();
   const { toast } = useToast();
   const [familyToDelete, setFamilyToDelete] = React.useState<Family | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const form = useForm<ClubSettingsFormValues>({
     resolver: zodResolver(ClubSettingsSchema),
     values: {
       name: clubSettings.name,
+      logoUrl: clubSettings.logoUrl,
     },
   });
 
+  const logoUrl = form.watch("logoUrl");
+
   React.useEffect(() => {
-    form.reset({ name: clubSettings.name });
+    form.reset({ name: clubSettings.name, logoUrl: clubSettings.logoUrl });
   }, [clubSettings, form]);
 
   const onSubmit = (data: ClubSettingsFormValues) => {
     updateClubSettings(data);
+    toast({ title: "Settings saved!" });
+    form.reset(data);
+  };
+
+  const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        form.setValue("logoUrl", reader.result as string, { shouldDirty: true });
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleDeleteFamily = () => {
@@ -173,10 +191,11 @@ export default function SettingsPage() {
                             <Label htmlFor="logo">Club Logo</Label>
                             <div className="flex items-center gap-4">
                                 <Avatar className="h-16 w-16" data-ai-hint="club logo">
-                                    <AvatarImage src="https://placehold.co/100x100.png" />
-                                    <AvatarFallback>CC</AvatarFallback>
+                                    <AvatarImage src={logoUrl || clubSettings.logoUrl} />
+                                    <AvatarFallback><Package2 className="h-8 w-8" /></AvatarFallback>
                                 </Avatar>
-                                <Button variant="outline" type="button">Upload New Logo</Button>
+                                <Button variant="outline" type="button" onClick={() => fileInputRef.current?.click()}>Upload New Logo</Button>
+                                <input type="file" ref={fileInputRef} onChange={handleLogoChange} accept="image/*" className="hidden" />
                             </div>
                         </div>
                         <div className="space-y-4">
@@ -188,7 +207,7 @@ export default function SettingsPage() {
                                 {admins.map(email => <li key={email}>{email}</li>)}
                             </ul>
                         </div>
-                        <Button type="submit" className="bg-accent hover:bg-accent/90 text-accent-foreground">Save Changes</Button>
+                        <Button type="submit" disabled={!form.formState.isDirty} className="bg-accent hover:bg-accent/90 text-accent-foreground">Save Changes</Button>
                     </CardContent>
                 </Card>
                 </form>

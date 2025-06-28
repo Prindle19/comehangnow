@@ -25,7 +25,12 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
-            <Package2 className="h-6 w-6 text-primary" />
+            <Avatar className="h-8 w-8">
+                <AvatarImage src={clubSettings.logoUrl} alt={clubSettings.name} />
+                <AvatarFallback>
+                    <Package2 className="h-5 w-5" />
+                </AvatarFallback>
+            </Avatar>
             <span className="font-bold text-lg font-headline">{clubSettings.name}</span>
           </Link>
           {user && (
