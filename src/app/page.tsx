@@ -11,13 +11,14 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogIn } from "lucide-react";
-import { collection, addDoc, deleteDoc, onSnapshot, Timestamp, doc } from "firebase/firestore";
+import { collection, addDoc, deleteDoc, onSnapshot, Timestamp, doc, query, where, getDocs, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function Home() {
   const { user, family, allFamilies, signIn } = useAuth();
   const [checkIns, setCheckIns] = React.useState<CheckIn[]>([]);
   const [isCheckInDialogOpen, setCheckInDialogOpen] = React.useState(false);
+  const [familyCheckIn, setFamilyCheckIn] = React.useState<CheckIn | null>(null);
 
   React.useEffect(() => {
     if (!db) return;
@@ -37,43 +38,54 @@ export default function Home() {
     return () => unsubscribe();
   }, []);
 
+  React.useEffect(() => {
+    const currentFamilyCheckIn = checkIns.find(c => c.familyId === family?.id) || null;
+    setFamilyCheckIn(currentFamilyCheckIn);
+  }, [checkIns, family]);
 
   const handleCheckIn = async (
     familyId: string,
     memberIds: string[],
-    locationIds: string[],
+    locationId: string,
     durationMinutes: number
   ) => {
     if (!db) return;
     const now = new Date();
     const checkOutTime = new Date(now.getTime() + durationMinutes * 60000);
 
-    const checkInPromises = locationIds.map((locationId) => {
-      const newCheckIn = {
-        familyId,
-        memberIds,
-        locationId,
-        checkInTime: Timestamp.fromDate(now),
-        checkOutTime: Timestamp.fromDate(checkOutTime),
-      };
-      return addDoc(collection(db, "checkins"), newCheckIn);
-    });
+    const newCheckInData = {
+      familyId,
+      memberIds,
+      locationId,
+      checkInTime: Timestamp.fromDate(now),
+      checkOutTime: Timestamp.fromDate(checkOutTime),
+    };
 
-    await Promise.all(checkInPromises);
-  };
+    const checkinsRef = collection(db, "checkins");
+    const q = query(checkinsRef, where("familyId", "==", familyId));
+    const querySnapshot = await getDocs(q);
 
-  const handleLeave = async (checkInId: string) => {
-    if (!db) return;
-    await deleteDoc(doc(db, "checkins", checkInId));
+    if (querySnapshot.empty) {
+      await addDoc(collection(db, "checkins"), newCheckInData);
+    } else {
+      const docId = querySnapshot.docs[0].id;
+      await updateDoc(doc(db, "checkins", docId), newCheckInData);
+    }
   };
   
-  const handleLeaveAll = async (familyId: string) => {
-    if (!db) return;
-    const checkInsToDelete = checkIns.filter(c => c.familyId === familyId);
-    const deletePromises = checkInsToDelete.map(c => deleteDoc(doc(db, "checkins", c.id)));
-    await Promise.all(deletePromises);
-  }
+  const handleLeave = async (familyId: string) => {
+    if (!db || !familyId) return;
+    
+    const checkinsRef = collection(db, "checkins");
+    const q = query(checkinsRef, where("familyId", "==", familyId));
+    const querySnapshot = await getDocs(q);
 
+    if (!querySnapshot.empty) {
+        const docId = querySnapshot.docs[0].id;
+        await deleteDoc(doc(db, "checkins", docId));
+    }
+  };
+  
   if (!user) {
     return (
         <div className="container mx-auto p-4 md:p-8 flex items-center justify-center" style={{ minHeight: 'calc(100vh - 150px)' }}>
@@ -97,9 +109,16 @@ export default function Home() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold font-headline">At the Club</h1>
         {family && (
-          <Button onClick={() => setCheckInDialogOpen(true)} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-            Check In
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setCheckInDialogOpen(true)} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+              {familyCheckIn ? "Update Check-in" : "Check In"}
+            </Button>
+            {familyCheckIn && (
+              <Button onClick={() => handleLeave(family.id)} size="lg" variant="destructive">
+                Leave Club
+              </Button>
+            )}
+          </div>
         )}
       </div>
 
@@ -124,8 +143,6 @@ export default function Home() {
             location={location}
             checkIns={checkIns.filter((c) => c.locationId === location.id)}
             families={allFamilies}
-            onLeave={handleLeave}
-            onLeaveAll={handleLeaveAll}
             currentFamilyId={family?.id}
           />
         ))}
@@ -138,6 +155,7 @@ export default function Home() {
             family={family}
             locations={clubLocations}
             onCheckIn={handleCheckIn}
+            currentCheckIn={familyCheckIn}
         />
       )}
     </div>

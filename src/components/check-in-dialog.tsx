@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -18,16 +19,15 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import type { Family, ClubLocation } from "@/lib/types";
+import type { Family, ClubLocation, CheckIn } from "@/lib/types";
+import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 
 const CheckInSchema = z.object({
   familyId: z.string(),
   memberIds: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "You have to select at least one family member.",
   }),
-  locationIds: z.array(z.string()).refine((value) => value.some((item) => item), {
-    message: "You have to select at least one location.",
-  }),
+  locationId: z.string({ required_error: "You have to select a location." }),
   duration: z.string().min(1, { message: "Please select a duration." }),
 });
 
@@ -46,10 +46,11 @@ interface CheckInDialogProps {
   onOpenChange: (isOpen: boolean) => void;
   family: Family;
   locations: ClubLocation[];
-  onCheckIn: (familyId: string, memberIds: string[], locationIds: string[], durationMinutes: number) => void;
+  onCheckIn: (familyId: string, memberIds: string[], locationId: string, durationMinutes: number) => void;
+  currentCheckIn?: CheckIn | null;
 }
 
-export function CheckInDialog({ isOpen, onOpenChange, family, locations, onCheckIn }: CheckInDialogProps) {
+export function CheckInDialog({ isOpen, onOpenChange, family, locations, onCheckIn, currentCheckIn }: CheckInDialogProps) {
   const { toast } = useToast();
 
   const form = useForm<CheckInFormValues>({
@@ -57,26 +58,26 @@ export function CheckInDialog({ isOpen, onOpenChange, family, locations, onCheck
     defaultValues: {
       familyId: family.id,
       memberIds: [],
-      locationIds: [],
+      locationId: "",
       duration: "90",
     },
   });
 
   React.useEffect(() => {
-    if (family) {
+    if (isOpen) {
         form.reset({
             familyId: family.id,
-            memberIds: [],
-            locationIds: [],
+            memberIds: currentCheckIn?.memberIds || [],
+            locationId: currentCheckIn?.locationId || "",
             duration: "90",
         });
     }
-  }, [family, form]);
+  }, [isOpen, currentCheckIn, family, form]);
   
   const onSubmit = (data: CheckInFormValues) => {
-    onCheckIn(data.familyId, data.memberIds, data.locationIds, parseInt(data.duration, 10));
+    onCheckIn(data.familyId, data.memberIds, data.locationId, parseInt(data.duration, 10));
     toast({
-      title: "Check-in successful!",
+      title: currentCheckIn ? "Check-in Updated!" : "Check-in successful!",
       description: `Have a great time at the club.`,
     });
     form.reset();
@@ -87,7 +88,7 @@ export function CheckInDialog({ isOpen, onOpenChange, family, locations, onCheck
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="font-headline">Heading to the Club</DialogTitle>
+          <DialogTitle className="font-headline">{currentCheckIn ? 'Update Your Check-in' : 'Heading to the Club'}</DialogTitle>
           <DialogDescription>Let everyone know where you'll be and for how long.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -132,37 +133,29 @@ export function CheckInDialog({ isOpen, onOpenChange, family, locations, onCheck
 
             <FormField
               control={form.control}
-              name="locationIds"
-              render={() => (
-                <FormItem>
+              name="locationId"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
                   <div className="mb-4">
                     <FormLabel className="text-base">Where to?</FormLabel>
-                    <FormDescription>Pick your destinations at the club.</FormDescription>
+                    <FormDescription>Pick your destination at the club.</FormDescription>
                   </div>
-                  {locations.map((location) => (
-                    <FormField
-                      key={location.id}
-                      control={form.control}
-                      name="locationIds"
-                      render={({ field }) => {
-                        return (
-                          <FormItem key={location.id} className="flex flex-row items-start space-x-3 space-y-0">
-                            <FormControl>
-                               <Checkbox
-                                checked={field.value?.includes(location.id)}
-                                onCheckedChange={(checked) => {
-                                  return checked
-                                    ? field.onChange([...(field.value || []), location.id])
-                                    : field.onChange(field.value?.filter((value) => value !== location.id));
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="font-normal">{location.name}</FormLabel>
-                          </FormItem>
-                        );
-                      }}
-                    />
-                  ))}
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex flex-col space-y-1"
+                    >
+                      {locations.map((location) => (
+                        <FormItem key={location.id} className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value={location.id} id={location.id} />
+                          </FormControl>
+                          <FormLabel htmlFor={location.id} className="font-normal">{location.name}</FormLabel>
+                        </FormItem>
+                      ))}
+                    </RadioGroup>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -194,7 +187,7 @@ export function CheckInDialog({ isOpen, onOpenChange, family, locations, onCheck
             />
 
             <DialogFooter>
-              <Button type="submit" className="bg-accent hover:bg-accent/90 text-accent-foreground">Check In</Button>
+              <Button type="submit" className="bg-accent hover:bg-accent/90 text-accent-foreground">{currentCheckIn ? 'Update Check-in' : 'Check In'}</Button>
             </DialogFooter>
           </form>
         </Form>

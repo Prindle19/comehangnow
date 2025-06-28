@@ -10,8 +10,6 @@ interface LocationSectionProps {
   location: ClubLocation;
   checkIns: CheckIn[];
   families: Family[];
-  onLeave: (checkInId: string) => void;
-  onLeaveAll: (familyId: string) => void;
   currentFamilyId?: string | null;
 }
 
@@ -19,19 +17,14 @@ export default function LocationSection({
   location,
   checkIns,
   families,
-  onLeave,
-  onLeaveAll,
   currentFamilyId,
 }: LocationSectionProps) {
   const familiesAtLocation = React.useMemo(() => {
-    const familyMap = new Map<string, { family: Family; checkIns: CheckIn[] }>();
+    const familyMap = new Map<string, { family: Family; checkIn: CheckIn }>();
     checkIns.forEach((checkIn) => {
       const family = families.find((f) => f.id === checkIn.familyId);
-      if (family) {
-        if (!familyMap.has(family.id)) {
-          familyMap.set(family.id, { family, checkIns: [] });
-        }
-        familyMap.get(family.id)!.checkIns.push(checkIn);
+      if (family && !familyMap.has(family.id)) {
+        familyMap.set(family.id, { family, checkIn });
       }
     });
     return Array.from(familyMap.values());
@@ -48,13 +41,11 @@ export default function LocationSection({
       <CardContent>
         {familiesAtLocation.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {familiesAtLocation.map(({ family, checkIns }) => (
+            {familiesAtLocation.map(({ family, checkIn }) => (
               <CheckedInFamilyCard
                 key={family.id}
                 family={family}
-                checkIns={checkIns}
-                onLeave={onLeave}
-                onLeaveAll={onLeaveAll}
+                checkIn={checkIn}
                 isCurrentUsersFamily={family.id === currentFamilyId}
               />
             ))}
