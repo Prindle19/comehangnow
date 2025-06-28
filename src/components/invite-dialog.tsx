@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -52,7 +51,9 @@ export function InviteDialog({ isOpen, onOpenChange, onInvite }: InviteDialogPro
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="font-headline">Add a Family Member</DialogTitle>
-          <DialogDescription>Add a new person to your family. If you provide an email, they'll be invited to join the app.</DialogDescription>
+          <DialogDescription>
+            You can add members without an email (like children), or reserve a spot for someone by adding their email.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -79,7 +80,7 @@ export function InviteDialog({ isOpen, onOpenChange, onInvite }: InviteDialogPro
                     <Input placeholder="name@example.com" {...field} />
                   </FormControl>
                    <FormDescription>
-                    If provided, an invitation will be sent for them to join via their Google account.
+                    No email will be sent. When a user signs up with this email, they will automatically join your family.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
