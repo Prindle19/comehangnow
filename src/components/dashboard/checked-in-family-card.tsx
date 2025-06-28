@@ -61,14 +61,10 @@ export default function CheckedInFamilyCard({ family, checkIn }: CheckedInFamily
         </div>
       </CardContent>
       <CardFooter className="flex justify-between items-center">
-        {minutesRemaining > 0 ? (
-           <Badge variant={getBadgeVariant()} className="flex items-center gap-1.5">
-             <Clock className="h-4 w-4" />
-             <span>Leaving in ~{minutesRemaining} min</span>
-           </Badge>
-        ) : (
-            <Badge variant="outline">Time is up</Badge>
-        )}
+        <Badge variant={getBadgeVariant()} className="flex items-center gap-1.5">
+          <Clock className="h-4 w-4" />
+          <span>Leaving in ~{Math.max(1, minutesRemaining)} min</span>
+        </Badge>
       </CardFooter>
     </Card>
   );

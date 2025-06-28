@@ -23,20 +23,38 @@ export default function Home() {
   React.useEffect(() => {
     if (!db) return;
     const checkInsCollection = collection(db, "checkins");
+
     const unsubscribe = onSnapshot(checkInsCollection, (snapshot) => {
-      const checkInsData = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          ...data,
-          id: doc.id,
-          checkInTime: (data.checkInTime as Timestamp).toDate(),
-          checkOutTime: (data.checkOutTime as Timestamp).toDate(),
-        } as CheckIn
+      const now = new Date();
+      const activeCheckins: CheckIn[] = [];
+      const expiredCheckinIds: string[] = [];
+
+      snapshot.docs.forEach((docSnapshot) => {
+        const data = docSnapshot.data();
+        const checkOutTime = (data.checkOutTime as Timestamp).toDate();
+        
+        if (checkOutTime > now) {
+          activeCheckins.push({
+            ...data,
+            id: docSnapshot.id,
+            checkInTime: (data.checkInTime as Timestamp).toDate(),
+            checkOutTime: checkOutTime,
+          } as CheckIn);
+        } else {
+          expiredCheckinIds.push(docSnapshot.id);
+        }
       });
-      setCheckIns(checkInsData);
+      
+      setCheckIns(activeCheckins);
+
+      // Delete expired check-ins in the background
+      expiredCheckinIds.forEach(async (id) => {
+        await deleteDoc(doc(db, "checkins", id));
+      });
     });
+
     return () => unsubscribe();
-  }, []);
+  }, [db]);
 
   React.useEffect(() => {
     const currentFamilyCheckIn = checkIns.find(c => c.familyId === family?.id) || null;
