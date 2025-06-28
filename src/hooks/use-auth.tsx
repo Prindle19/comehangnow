@@ -3,12 +3,16 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
-import { collection, onSnapshot, doc, updateDoc, addDoc } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc } from "firebase/firestore";
 import { auth, db } from '@/lib/firebase';
 import { admins } from '@/lib/data';
 import type { Family, FamilyMember } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from './use-toast';
+
+interface ClubSettings {
+  name: string;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -17,10 +21,13 @@ interface AuthContextType {
   familyMember: FamilyMember | null;
   isAdmin: boolean;
   loading: boolean;
+  clubSettings: ClubSettings;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
   updateFamilyData: (updatedFamily: Family) => void;
   createFamily: (familyName: string) => void;
+  updateClubSettings: (newSettings: Partial<ClubSettings>) => Promise<void>;
+  deleteFamily: (familyId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,6 +39,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [familyMember, setFamilyMember] = useState<FamilyMember | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [clubSettings, setClubSettings] = useState<ClubSettings>({ name: "ClubConnect" });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -39,23 +47,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setLoading(false);
         return;
     }
+
     const familiesCollection = collection(db, "families");
-    const unsubscribe = onSnapshot(familiesCollection, (snapshot) => {
+    const unsubscribeFamilies = onSnapshot(familiesCollection, (snapshot) => {
         const familiesData = snapshot.docs.map(doc => ({ ...doc.data() as Omit<Family, 'id'>, id: doc.id }));
         setAllFamilies(familiesData);
     }, (error) => {
         console.error("Error fetching families:", error);
-        if (error.code === 'permission-denied') {
-            toast({
-                variant: "destructive",
-                title: "Firestore Permission Denied",
-                description: "Please check your Firestore security rules to allow read access.",
-            });
+        toast({
+            variant: "destructive",
+            title: "Firestore Permission Denied",
+            description: "Please check your Firestore security rules to allow read access.",
+        });
+    });
+
+    const settingsDocRef = doc(db, "clubSettings", "main");
+    const unsubscribeSettings = onSnapshot(settingsDocRef, (doc) => {
+        if (doc.exists()) {
+            setClubSettings(doc.data() as ClubSettings);
+        } else if (isAdmin) {
+            setDoc(settingsDocRef, { name: "ClubConnect" });
         }
     });
 
-    return () => unsubscribe();
-  }, [toast]);
+
+    return () => {
+        unsubscribeFamilies();
+        unsubscribeSettings();
+    };
+  }, [toast, isAdmin]);
 
   useEffect(() => {
     if (!auth) {
@@ -76,7 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setFamily(null);
       setFamilyMember(null);
       setIsAdmin(false);
-      // Don't set loading to false here, onAuthStateChanged will handle it
+      setLoading(false);
       return;
     }
 
@@ -124,11 +144,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await signInWithPopup(auth, provider);
     } catch (error: any) {
         console.error("Error during sign-in:", error);
-        toast({
-            variant: "destructive",
-            title: "Sign-in Error",
-            description: error.message,
-        });
+        if (error.code !== 'auth/popup-closed-by-user') {
+            toast({
+                variant: "destructive",
+                title: "Sign-in Error",
+                description: error.message,
+            });
+        }
     }
   };
 
@@ -167,8 +189,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     await addDoc(collection(db, "families"), newFamily);
   };
+  
+  const updateClubSettings = async (newSettings: Partial<ClubSettings>) => {
+    if (!db || !isAdmin) return;
+    const settingsDocRef = doc(db, "clubSettings", "main");
+    try {
+        await setDoc(settingsDocRef, newSettings, { merge: true });
+        toast({ title: "Settings updated successfully!" });
+    } catch (error) {
+        console.error("Error updating settings:", error);
+        toast({ title: "Error updating settings", variant: "destructive" });
+    }
+  };
 
-  const value = { user, family, allFamilies, familyMember, isAdmin, loading, signIn, signOut, updateFamilyData, createFamily };
+  const deleteFamily = async (familyId: string) => {
+    if (!db || !isAdmin) return;
+    try {
+        await deleteDoc(doc(db, "families", familyId));
+        toast({ title: "Family deleted successfully." });
+    } catch (error: any) {
+        console.error("Error deleting family:", error);
+        toast({ title: "Error deleting family", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const value = { user, family, allFamilies, familyMember, isAdmin, loading, clubSettings, signIn, signOut, updateFamilyData, createFamily, updateClubSettings, deleteFamily };
 
   return (
     <AuthContext.Provider value={value}>

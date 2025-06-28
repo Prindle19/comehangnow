@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -17,7 +18,7 @@ const navLinks = [
 
 export function Header() {
   const pathname = usePathname();
-  const { user, signIn, signOut, familyMember } = useAuth();
+  const { user, signIn, signOut, familyMember, clubSettings } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
@@ -25,7 +26,7 @@ export function Header() {
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
             <Package2 className="h-6 w-6 text-primary" />
-            <span className="font-bold text-lg font-headline">ClubConnect</span>
+            <span className="font-bold text-lg font-headline">{clubSettings.name}</span>
           </Link>
           {user && (
             <nav className="hidden items-center gap-4 text-sm md:flex">

@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { CheckIn, ClubLocation, Family } from "@/lib/types";
 import { clubLocations } from "@/lib/data";
 import { CheckInDialog } from "@/components/check-in-dialog";
@@ -14,7 +15,7 @@ import { collection, addDoc, deleteDoc, onSnapshot, Timestamp, doc } from "fireb
 import { db } from "@/lib/firebase";
 
 export default function Home() {
-  const { user, family, allFamilies } = useAuth();
+  const { user, family, allFamilies, signIn } = useAuth();
   const [checkIns, setCheckIns] = React.useState<CheckIn[]>([]);
   const [isCheckInDialogOpen, setCheckInDialogOpen] = React.useState(false);
 
@@ -73,7 +74,7 @@ export default function Home() {
     await Promise.all(deletePromises);
   }
 
-  if (!user || !family) {
+  if (!user) {
     return (
         <div className="container mx-auto p-4 md:p-8 flex items-center justify-center" style={{ minHeight: 'calc(100vh - 150px)' }}>
             <Card className="w-full max-w-md text-center">
@@ -82,7 +83,7 @@ export default function Home() {
                 </CardHeader>
                 <CardContent>
                     <p className="mb-6 text-muted-foreground">Please sign in to see who's at the club and check in your family.</p>
-                    <Button onClick={useAuth().signIn} size="lg">
+                    <Button onClick={signIn} size="lg">
                         <LogIn className="mr-2 h-5 w-5" /> Sign In with Google
                     </Button>
                 </CardContent>
@@ -95,10 +96,26 @@ export default function Home() {
     <div className="container mx-auto p-4 md:p-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold font-headline">At the Club</h1>
-        <Button onClick={() => setCheckInDialogOpen(true)} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-          Check In
-        </Button>
+        {family && (
+          <Button onClick={() => setCheckInDialogOpen(true)} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+            Check In
+          </Button>
+        )}
       </div>
+
+      {!family && (
+         <Card className="mb-8">
+            <CardHeader>
+                <CardTitle>Welcome!</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-muted-foreground">You're logged in, but not yet part of a family.</p>
+                <Button asChild variant="link" className="p-0 h-auto">
+                    <Link href="/family">Go to the Family page to create or join one.</Link>
+                </Button>
+            </CardContent>
+         </Card>
+      )}
 
       <div className="grid gap-8">
         {clubLocations.map((location) => (
@@ -114,13 +131,15 @@ export default function Home() {
         ))}
       </div>
       
-      <CheckInDialog
-        isOpen={isCheckInDialogOpen}
-        onOpenChange={setCheckInDialogOpen}
-        family={family}
-        locations={clubLocations}
-        onCheckIn={handleCheckIn}
-      />
+      {family && (
+        <CheckInDialog
+            isOpen={isCheckInDialogOpen}
+            onOpenChange={setCheckInDialogOpen}
+            family={family}
+            locations={clubLocations}
+            onCheckIn={handleCheckIn}
+        />
+      )}
     </div>
   );
 }
