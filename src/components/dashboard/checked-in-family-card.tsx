@@ -17,6 +17,18 @@ interface CheckedInFamilyCardProps {
   isCurrentUsersFamily: boolean;
 }
 
+const getInitials = (name: string) => {
+    const parts = name.split(' ');
+    let initials = '';
+    if (parts.length > 0 && parts[0]) {
+      initials += parts[0][0];
+    }
+    if (parts.length > 1 && parts[parts.length - 1]) {
+      initials += parts[parts.length - 1][0];
+    }
+    return initials.toUpperCase();
+}
+
 export default function CheckedInFamilyCard({ family, checkIn }: CheckedInFamilyCardProps) {
   const [now, setNow] = React.useState(new Date());
 
@@ -48,7 +60,7 @@ export default function CheckedInFamilyCard({ family, checkIn }: CheckedInFamily
                 <TooltipTrigger>
                   <Avatar data-ai-hint="person face">
                     <AvatarImage src={member.avatarUrl} alt={member.name} />
-                    <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
                   </Avatar>
                 </TooltipTrigger>
                 <TooltipContent>

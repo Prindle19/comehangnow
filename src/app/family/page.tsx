@@ -34,7 +34,7 @@ export default function FamilyPage() {
       id: `mem${Date.now()}`,
       name,
       email: email || "",
-      avatarUrl: "https://placehold.co/100x100.png",
+      avatarUrl: "",
       role: 'member',
       status: email ? 'pending' : 'active'
     };

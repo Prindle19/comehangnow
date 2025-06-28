@@ -178,7 +178,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         id: `mem${Date.now()}`,
         name: user.displayName || user.email || 'New User',
         email: user.email!,
-        avatarUrl: user.photoURL || "https://placehold.co/100x100.png",
+        avatarUrl: user.photoURL || "",
         role: 'owner',
         status: 'active'
     };
