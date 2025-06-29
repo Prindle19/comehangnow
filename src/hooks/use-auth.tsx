@@ -39,36 +39,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [allFamilies, setAllFamilies] = useState<Family[]>([]);
   const [familyMember, setFamilyMember] = useState<FamilyMember | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [authLoading, setAuthLoading] = useState<boolean>(true);
+  const [familiesLoading, setFamiliesLoading] = useState<boolean>(true);
   const [clubSettings, setClubSettings] = useState<ClubSettings>({ name: "Come Hang Now", logoUrl: "" });
+  const [settingsLoading, setSettingsLoading] = useState<boolean>(true);
   const { toast } = useToast();
 
   useEffect(() => {
+    if (clubSettings.name && !settingsLoading) {
+      document.title = clubSettings.name;
+    }
+  }, [clubSettings.name, settingsLoading]);
+
+  useEffect(() => {
     if (!auth) {
-        setLoading(false);
+        setAuthLoading(false);
+        setSettingsLoading(false);
         return;
     }
-    const handleAuthChange = (user: User | null) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
         setUser(user);
         if (!user) {
             // Clear all user-specific state on sign-out
-            setLoading(false);
             setFamily(null);
             setFamilyMember(null);
             setIsAdmin(false);
             setAllFamilies([]);
-            // Don't reset club settings on logout, keep showing branding
         } else {
-            setLoading(true);
             setIsAdmin(admins.includes(user.email || ''));
         }
-    };
-    const unsubscribe = onAuthStateChanged(auth, handleAuthChange);
+        setAuthLoading(false);
+    });
     return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (!db) return;
+    if (!db) {
+      setSettingsLoading(false);
+      return;
+    }
 
     // Fetch club settings regardless of auth state for branding
     const settingsDocRef = doc(db, "clubSettings", "main");
@@ -82,17 +91,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 await setDoc(settingsDocRef, defaultSettings);
             }
         }
+        setSettingsLoading(false);
     });
 
     // Only fetch families if user is logged in
     let unsubscribeFamilies = () => {};
     if (user) {
-        setLoading(true);
+        setFamiliesLoading(true);
         const familiesCollection = collection(db, "families");
         unsubscribeFamilies = onSnapshot(familiesCollection, (snapshot) => {
             const familiesData = snapshot.docs.map(doc => ({ ...doc.data() as Omit<Family, 'id'>, id: doc.id }));
             setAllFamilies(familiesData);
-            setLoading(false);
+            setFamiliesLoading(false);
         }, (error) => {
             console.error("Error fetching families:", error);
             if (error.code === 'permission-denied') {
@@ -102,8 +112,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     variant: "destructive"
                 });
             }
-            setLoading(false);
+            setFamiliesLoading(false);
         });
+    } else {
+      setFamiliesLoading(false);
     }
 
     return () => {
@@ -223,11 +235,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const value = { user, family, allFamilies, familyMember, isAdmin, loading, clubSettings, signIn, signOut, updateFamilyData, createFamily, updateClubSettings, deleteFamily };
+  const overallLoading = authLoading || settingsLoading || (user && familiesLoading);
+
+  const value = { user, family, allFamilies, familyMember, isAdmin, loading: overallLoading, clubSettings, signIn, signOut, updateFamilyData, createFamily, updateClubSettings, deleteFamily };
 
   return (
     <AuthContext.Provider value={value}>
-      {loading && !user ? (
+      {overallLoading ? (
          <div className="w-full h-screen flex items-center justify-center">
             <div className="flex flex-col items-center gap-4">
                 <Skeleton className="h-16 w-16 rounded-full" />
