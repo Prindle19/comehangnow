@@ -13,9 +13,10 @@ import { InviteDialog } from "@/components/invite-dialog";
 import { cn, getFirstName } from "@/lib/utils";
 import { CreateFamilyDialog } from "@/components/create-family-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function FamilyPage() {
-  const { user, family, familyMember, updateFamilyData, signIn, createFamily } = useAuth();
+  const { user, family, familyMember, updateFamilyData, signIn, createFamily, loading } = useAuth();
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [isInviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [isCreateFamilyDialogOpen, setCreateFamilyDialogOpen] = useState(false);
@@ -61,6 +62,29 @@ export default function FamilyPage() {
   };
 
   const isOwner = familyMember?.role === 'owner';
+
+  if (loading) {
+    return (
+        <div className="container mx-auto p-4 md:p-8">
+            <Card>
+                <CardHeader>
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <Skeleton className="h-8 w-48 mb-2" />
+                            <Skeleton className="h-4 w-64" />
+                        </div>
+                        <Skeleton className="h-10 w-32 rounded-md" />
+                    </div>
+                </CardHeader>
+                <CardContent className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <Skeleton className="h-56 w-full rounded-lg" />
+                    <Skeleton className="h-56 w-full rounded-lg" />
+                    <Skeleton className="h-56 w-full rounded-lg" />
+                </CardContent>
+            </Card>
+        </div>
+    );
+  }
 
   if (!user) {
      return (

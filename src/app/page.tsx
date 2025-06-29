@@ -13,9 +13,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogIn } from "lucide-react";
 import { collection, addDoc, deleteDoc, onSnapshot, Timestamp, doc, query, where, getDocs, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Home() {
-  const { user, family, allFamilies, signIn, clubSettings } = useAuth();
+  const { user, family, allFamilies, signIn, clubSettings, loading } = useAuth();
   const [allCheckIns, setAllCheckIns] = React.useState<CheckIn[]>([]);
   const [activeCheckIns, setActiveCheckIns] = React.useState<CheckIn[]>([]);
   const [isCheckInDialogOpen, setCheckInDialogOpen] = React.useState(false);
@@ -130,6 +131,22 @@ export default function Home() {
     }
   };
   
+  if (loading) {
+    return (
+      <div className="container mx-auto p-4 md:p-8">
+        <div className="flex justify-between items-center mb-8">
+            <Skeleton className="h-10 w-48" />
+            <Skeleton className="h-11 w-28 rounded-md" />
+        </div>
+        <div className="grid gap-8">
+            <Skeleton className="h-48 w-full rounded-lg" />
+            <Skeleton className="h-48 w-full rounded-lg" />
+            <Skeleton className="h-48 w-full rounded-lg" />
+        </div>
+      </div>
+    );
+  }
+
   if (!user) {
     return (
         <div className="container mx-auto p-4 md:p-8 flex items-center justify-center" style={{ minHeight: 'calc(100vh - 150px)' }}>

@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import type { Family } from "@/lib/types";
 import { AlertDialogTrigger } from '@radix-ui/react-alert-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const ClubSettingsSchema = z.object({
   name: z.string().min(2, { message: "Community name must be at least 2 characters." }),
@@ -32,7 +33,7 @@ type ClubSettingsFormValues = z.infer<typeof ClubSettingsSchema>;
 
 
 export default function SettingsPage() {
-  const { user, family, allFamilies, signIn, isAdmin, clubSettings, updateClubSettings, deleteFamily } = useAuth();
+  const { user, family, allFamilies, signIn, isAdmin, clubSettings, updateClubSettings, deleteFamily, loading } = useAuth();
   const { toast } = useToast();
   const [familyToDelete, setFamilyToDelete] = React.useState<Family | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -88,6 +89,27 @@ export default function SettingsPage() {
     }
   };
   
+  if (loading) {
+     return (
+        <div className="container mx-auto p-4 md:p-8">
+            <Skeleton className="h-10 w-48 mb-8" />
+            <div className="w-full">
+                <Skeleton className="h-10 w-64 mb-2" />
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-8 w-48" />
+                        <Skeleton className="h-4 w-64" />
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <Skeleton className="h-16 w-full rounded-lg" />
+                        <Skeleton className="h-16 w-full rounded-lg" />
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    );
+  }
+
   if (!user) {
     return (
         <div className="container mx-auto p-4 md:p-8 flex items-center justify-center" style={{ minHeight: 'calc(100vh - 150px)' }}>

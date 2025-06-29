@@ -3,11 +3,10 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
-import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc, getDoc } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc } from "firebase/firestore";
 import { auth, db } from '@/lib/firebase';
 import { admins } from '@/lib/data';
 import type { Family, FamilyMember } from '@/lib/types';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from './use-toast';
 
 interface ClubSettings {
@@ -55,6 +54,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!auth) {
         setAuthLoading(false);
         setSettingsLoading(false);
+        setFamiliesLoading(false);
         return;
     }
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -241,15 +241,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {overallLoading ? (
-         <div className="w-full h-screen flex items-center justify-center">
-            <div className="flex flex-col items-center gap-4">
-                <Skeleton className="h-16 w-16 rounded-full" />
-                <Skeleton className="h-8 w-48" />
-                <Skeleton className="h-8 w-32" />
-            </div>
-         </div>
-      ) : children}
+      {children}
     </AuthContext.Provider>
   );
 };
