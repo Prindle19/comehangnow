@@ -6,8 +6,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/hooks/use-auth';
 
 export const metadata: Metadata = {
-  title: 'ClubConnect',
-  description: 'Know whos at the club and where.',
+  title: 'Come Hang Now',
+  description: "Know who's at the club and where.",
   manifest: '/manifest.json',
 };
 

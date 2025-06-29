@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
-import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc, getDoc } from "firebase/firestore";
 import { auth, db } from '@/lib/firebase';
 import { admins } from '@/lib/data';
 import type { Family, FamilyMember } from '@/lib/types';
@@ -40,76 +40,92 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [familyMember, setFamilyMember] = useState<FamilyMember | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const [clubSettings, setClubSettings] = useState<ClubSettings>({ name: "ClubConnect", logoUrl: "" });
+  const [clubSettings, setClubSettings] = useState<ClubSettings>({ name: "Come Hang Now", logoUrl: "" });
   const { toast } = useToast();
-
-  useEffect(() => {
-    if (!user || !db) {
-        setAllFamilies([]); // clear data if logged out
-        return;
-    }
-
-    const familiesCollection = collection(db, "families");
-    const unsubscribeFamilies = onSnapshot(familiesCollection, (snapshot) => {
-        const familiesData = snapshot.docs.map(doc => ({ ...doc.data() as Omit<Family, 'id'>, id: doc.id }));
-        setAllFamilies(familiesData);
-    }, (error) => {
-        console.error("Error fetching families:", error);
-        // Do not toast permission errors for unauthenticated users
-    });
-
-    const settingsDocRef = doc(db, "clubSettings", "main");
-    const unsubscribeSettings = onSnapshot(settingsDocRef, (doc) => {
-        if (doc.exists()) {
-            setClubSettings(doc.data() as ClubSettings);
-        } else if (user && admins.includes(user.email || '')) {
-            setDoc(settingsDocRef, { name: "ClubConnect", logoUrl: "" });
-        }
-    });
-
-
-    return () => {
-        unsubscribeFamilies();
-        unsubscribeSettings();
-    };
-  }, [user, db]);
 
   useEffect(() => {
     if (!auth) {
         setLoading(false);
         return;
     }
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-      if (!firebaseUser) {
-        setLoading(false);
-      }
-    });
+    const handleAuthChange = (user: User | null) => {
+        setUser(user);
+        if (!user) {
+            // Clear all user-specific state on sign-out
+            setLoading(false);
+            setFamily(null);
+            setFamilyMember(null);
+            setIsAdmin(false);
+            setAllFamilies([]);
+            // Don't reset club settings on logout, keep showing branding
+        } else {
+            setLoading(true);
+            setIsAdmin(admins.includes(user.email || ''));
+        }
+    };
+    const unsubscribe = onAuthStateChanged(auth, handleAuthChange);
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!db) return;
+
+    // Fetch club settings regardless of auth state for branding
+    const settingsDocRef = doc(db, "clubSettings", "main");
+    const unsubscribeSettings = onSnapshot(settingsDocRef, async (docSnap) => {
+        if (docSnap.exists()) {
+            setClubSettings(docSnap.data() as ClubSettings);
+        } else {
+            const defaultSettings = { name: "Come Hang Now", logoUrl: "" };
+            setClubSettings(defaultSettings);
+            if (user && admins.includes(user.email || '')) {
+                await setDoc(settingsDocRef, defaultSettings);
+            }
+        }
+    });
+
+    // Only fetch families if user is logged in
+    let unsubscribeFamilies = () => {};
+    if (user) {
+        setLoading(true);
+        const familiesCollection = collection(db, "families");
+        unsubscribeFamilies = onSnapshot(familiesCollection, (snapshot) => {
+            const familiesData = snapshot.docs.map(doc => ({ ...doc.data() as Omit<Family, 'id'>, id: doc.id }));
+            setAllFamilies(familiesData);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching families:", error);
+            if (error.code === 'permission-denied') {
+                toast({
+                    title: "Permission Denied",
+                    description: "Please check your Firestore security rules.",
+                    variant: "destructive"
+                });
+            }
+            setLoading(false);
+        });
+    }
+
+    return () => {
+        unsubscribeSettings();
+        unsubscribeFamilies();
+    };
+  }, [user, db]);
 
   useEffect(() => {
     if (!user) {
       setFamily(null);
       setFamilyMember(null);
-      setIsAdmin(false);
-      setLoading(false);
       return;
     }
 
-    setLoading(true);
-    setIsAdmin(admins.includes(user.email || ''));
-
-    let userFamily: Family | null = null;
-    let userFamilyMember: FamilyMember | null = null;
-    
     const foundFamily = allFamilies.find(f => f.members.some(m => m.email === user.email));
 
     if (foundFamily) {
-        userFamily = foundFamily;
+        setFamily(foundFamily);
         const member = foundFamily.members.find(m => m.email === user.email);
         if (member) {
-            userFamilyMember = member;
+            setFamilyMember(member);
             if (member.status === 'pending') {
                 const updatedMembers = foundFamily.members.map(m => 
                     m.id === member.id 
@@ -119,12 +135,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 updateFamilyData({ ...foundFamily, members: updatedMembers });
             }
         }
+    } else {
+        setFamily(null);
+        setFamilyMember(null);
     }
-
-    setFamily(userFamily);
-    setFamilyMember(userFamilyMember);
-    setLoading(false);
-
   }, [user, allFamilies]);
 
   const signIn = async () => {

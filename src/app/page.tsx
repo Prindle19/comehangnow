@@ -135,7 +135,7 @@ export default function Home() {
         <div className="container mx-auto p-4 md:p-8 flex items-center justify-center" style={{ minHeight: 'calc(100vh - 150px)' }}>
             <Card className="w-full max-w-md text-center">
                 <CardHeader>
-                    <CardTitle className="font-headline">Welcome to ClubConnect</CardTitle>
+                    <CardTitle className="font-headline">Welcome to Come Hang Now</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <p className="mb-6 text-muted-foreground">Please sign in to see who's at the club and check in your family.</p>

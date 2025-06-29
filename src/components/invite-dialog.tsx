@@ -45,7 +45,7 @@ export function InviteDialog({ isOpen, onOpenChange, onInvite }: InviteDialogPro
     }
   }, []);
 
-  const invitationText = `You've been invited to join our family on ClubConnect! Sign up here: ${appUrl}`;
+  const invitationText = `You've been invited to join our family on Come Hang Now! Sign up here: ${appUrl}`;
   
   const handleCopy = () => {
     navigator.clipboard.writeText(invitationText);

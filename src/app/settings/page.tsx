@@ -40,7 +40,7 @@ export default function SettingsPage() {
   const form = useForm<ClubSettingsFormValues>({
     resolver: zodResolver(ClubSettingsSchema),
     defaultValues: {
-        name: "ClubConnect",
+        name: "Come Hang Now",
         logoUrl: "",
     },
   });
