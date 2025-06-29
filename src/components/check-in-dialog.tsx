@@ -78,7 +78,7 @@ export function CheckInDialog({ isOpen, onOpenChange, family, locations, onCheck
     onCheckIn(data.familyId, data.memberIds, data.locationId, parseInt(data.duration, 10));
     toast({
       title: currentCheckIn ? "Check-in Updated!" : "Check-in successful!",
-      description: `Have a great time at the club.`,
+      description: `Have a great time!`,
     });
     form.reset();
     onOpenChange(false);
@@ -88,7 +88,7 @@ export function CheckInDialog({ isOpen, onOpenChange, family, locations, onCheck
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="font-headline">{currentCheckIn ? 'Update Your Check-in' : 'Heading to the Club'}</DialogTitle>
+          <DialogTitle className="font-headline">{currentCheckIn ? 'Update Your Check-in' : 'Heading Out'}</DialogTitle>
           <DialogDescription>Let everyone know where you'll be and for how long.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -138,7 +138,7 @@ export function CheckInDialog({ isOpen, onOpenChange, family, locations, onCheck
                 <FormItem className="space-y-3">
                   <div className="mb-4">
                     <FormLabel className="text-base">Where to?</FormLabel>
-                    <FormDescription>Pick your destination at the club.</FormDescription>
+                    <FormDescription>Pick your destination.</FormDescription>
                   </div>
                   <FormControl>
                     <RadioGroup

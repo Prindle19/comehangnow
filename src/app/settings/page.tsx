@@ -24,7 +24,7 @@ import type { Family } from "@/lib/types";
 import { AlertDialogTrigger } from '@radix-ui/react-alert-dialog';
 
 const ClubSettingsSchema = z.object({
-  name: z.string().min(2, { message: "Club name must be at least 2 characters." }),
+  name: z.string().min(2, { message: "Community name must be at least 2 characters." }),
   logoUrl: z.string().optional(),
 });
 
@@ -114,7 +114,7 @@ export default function SettingsPage() {
       <Tabs defaultValue="notifications" className="w-full">
         <TabsList className={cn("grid w-full grid-cols-1", isAdmin ? "md:grid-cols-2 md:w-auto" : "md:w-[200px]")}>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          {isAdmin && <TabsTrigger value="customization">Club Customization</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="customization">Community Customization</TabsTrigger>}
         </TabsList>
         
         <TabsContent value="notifications">
@@ -122,7 +122,7 @@ export default function SettingsPage() {
             <CardHeader>
               <CardTitle className="font-headline">{isAdmin ? "Family Management" : "Notification Preferences"}</CardTitle>
               <CardDescription>
-                {isAdmin ? "Manage all families in the club." : "Choose which families you want to receive check-in notifications from."}
+                {isAdmin ? "Manage all families in the community." : "Choose which families you want to receive check-in notifications from."}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -173,9 +173,9 @@ export default function SettingsPage() {
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="font-headline">Club Customization</CardTitle>
+                        <CardTitle className="font-headline">Community Customization</CardTitle>
                         <CardDescription>
-                            Update your club's branding and settings.
+                            Update your community's branding and settings.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
@@ -184,7 +184,7 @@ export default function SettingsPage() {
                             name="name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <Label htmlFor="clubName">Club Name</Label>
+                                    <Label htmlFor="clubName">Community Name</Label>
                                     <FormControl>
                                         <Input id="clubName" {...field} />
                                     </FormControl>
@@ -193,9 +193,9 @@ export default function SettingsPage() {
                             )}
                         />
                         <div className="space-y-2">
-                            <Label htmlFor="logo">Club Logo</Label>
+                            <Label htmlFor="logo">Community Logo</Label>
                             <div className="flex items-center gap-4">
-                                <Avatar className="h-16 w-16" data-ai-hint="club logo">
+                                <Avatar className="h-16 w-16" data-ai-hint="community logo">
                                     <AvatarImage src={logoUrl || undefined} />
                                     <AvatarFallback><Package2 className="h-8 w-8" /></AvatarFallback>
                                 </Avatar>
@@ -206,7 +206,7 @@ export default function SettingsPage() {
                         <div className="space-y-4">
                             <Label>Admin Users</Label>
                             <CardDescription>
-                                Admins can manage club settings. This list is managed in the file <code>src/lib/data.ts</code>.
+                                Admins can manage community settings. This list is managed in the file <code>src/lib/data.ts</code>.
                             </CardDescription>
                             <ul className="list-disc pl-5 text-sm text-muted-foreground">
                                 {admins.map(email => <li key={email}>{email}</li>)}
