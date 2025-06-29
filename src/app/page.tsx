@@ -16,50 +16,73 @@ import { db } from "@/lib/firebase";
 
 export default function Home() {
   const { user, family, allFamilies, signIn } = useAuth();
-  const [checkIns, setCheckIns] = React.useState<CheckIn[]>([]);
+  const [allCheckIns, setAllCheckIns] = React.useState<CheckIn[]>([]);
+  const [activeCheckIns, setActiveCheckIns] = React.useState<CheckIn[]>([]);
   const [isCheckInDialogOpen, setCheckInDialogOpen] = React.useState(false);
   const [familyCheckIn, setFamilyCheckIn] = React.useState<CheckIn | null>(null);
 
+  // Get all check-ins from Firestore
   React.useEffect(() => {
     if (!db) return;
     const checkInsCollection = collection(db, "checkins");
-
     const unsubscribe = onSnapshot(checkInsCollection, (snapshot) => {
-      const now = new Date();
-      const activeCheckins: CheckIn[] = [];
-      const expiredCheckinIds: string[] = [];
-
-      snapshot.docs.forEach((docSnapshot) => {
+      const checkinsData = snapshot.docs.map((docSnapshot) => {
         const data = docSnapshot.data();
-        const checkOutTime = (data.checkOutTime as Timestamp).toDate();
-        
-        if (checkOutTime > now) {
-          activeCheckins.push({
-            ...data,
-            id: docSnapshot.id,
-            checkInTime: (data.checkInTime as Timestamp).toDate(),
-            checkOutTime: checkOutTime,
-          } as CheckIn);
-        } else {
-          expiredCheckinIds.push(docSnapshot.id);
-        }
+        return {
+          ...data,
+          id: docSnapshot.id,
+          checkInTime: (data.checkInTime as Timestamp).toDate(),
+          checkOutTime: (data.checkOutTime as Timestamp).toDate(),
+        } as CheckIn;
       });
-      
-      setCheckIns(activeCheckins);
-
-      // Delete expired check-ins in the background
-      expiredCheckinIds.forEach(async (id) => {
-        await deleteDoc(doc(db, "checkins", id));
-      });
+      setAllCheckIns(checkinsData);
     });
 
     return () => unsubscribe();
   }, [db]);
+  
+  // Filter check-ins periodically and delete expired ones
+  React.useEffect(() => {
+    const processCheckIns = () => {
+      if (!allCheckIns.length) {
+        setActiveCheckIns([]);
+        return;
+      };
+
+      const now = new Date();
+      const active: CheckIn[] = [];
+      const expiredIds: string[] = [];
+
+      allCheckIns.forEach((checkIn) => {
+        if (checkIn.checkOutTime > now) {
+          active.push(checkIn);
+        } else {
+          expiredIds.push(checkIn.id);
+        }
+      });
+
+      setActiveCheckIns(active);
+
+      // Delete expired check-ins in the background
+      if (db && expiredIds.length > 0) {
+        expiredIds.forEach(async (id) => {
+          await deleteDoc(doc(db, "checkins", id));
+        });
+      }
+    };
+    
+    processCheckIns(); // Run once immediately
+    
+    const intervalId = setInterval(processCheckIns, 1000 * 10); // Run every 10 seconds
+
+    return () => clearInterval(intervalId);
+  }, [allCheckIns, db]);
+
 
   React.useEffect(() => {
-    const currentFamilyCheckIn = checkIns.find(c => c.familyId === family?.id) || null;
+    const currentFamilyCheckIn = activeCheckIns.find(c => c.familyId === family?.id) || null;
     setFamilyCheckIn(currentFamilyCheckIn);
-  }, [checkIns, family]);
+  }, [activeCheckIns, family]);
 
   const handleCheckIn = async (
     familyId: string,
@@ -159,7 +182,7 @@ export default function Home() {
           <LocationSection
             key={location.id}
             location={location}
-            checkIns={checkIns.filter((c) => c.locationId === location.id)}
+            checkIns={activeCheckIns.filter((c) => c.locationId === location.id)}
             families={allFamilies}
             currentFamilyId={family?.id}
           />

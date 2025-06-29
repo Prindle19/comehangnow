@@ -2,12 +2,9 @@
 'use client';
 
 import * as React from 'react';
-import { differenceInMinutes } from 'date-fns';
-import { Clock } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { CheckIn, Family } from '@/lib/types';
 import { getFirstName } from '@/lib/utils';
@@ -19,22 +16,8 @@ interface CheckedInFamilyCardProps {
 }
 
 export default function CheckedInFamilyCard({ family, checkIn }: CheckedInFamilyCardProps) {
-  const [now, setNow] = React.useState(new Date());
-
-  React.useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60000); // Update every minute
-    return () => clearInterval(timer);
-  }, []);
 
   const membersPresent = family.members.filter(m => checkIn.memberIds.includes(m.id));
-
-  const minutesRemaining = differenceInMinutes(checkIn.checkOutTime, now);
-
-  const getBadgeVariant = () => {
-    if (minutesRemaining < 15) return "destructive";
-    if (minutesRemaining < 45) return "secondary";
-    return "default";
-  }
 
   return (
     <Card className="flex flex-col">
@@ -60,12 +43,6 @@ export default function CheckedInFamilyCard({ family, checkIn }: CheckedInFamily
           </TooltipProvider>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between items-center">
-        <Badge variant={getBadgeVariant()} className="flex items-center gap-1.5">
-          <Clock className="h-4 w-4" />
-          <span>Leaving in ~{Math.max(1, minutesRemaining)} min</span>
-        </Badge>
-      </CardFooter>
     </Card>
   );
 }
