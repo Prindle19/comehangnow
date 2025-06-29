@@ -44,8 +44,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!db) {
-        setLoading(false);
+    if (!user || !db) {
+        setAllFamilies([]); // clear data if logged out
         return;
     }
 
@@ -55,11 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setAllFamilies(familiesData);
     }, (error) => {
         console.error("Error fetching families:", error);
-        toast({
-            variant: "destructive",
-            title: "Firestore Permission Denied",
-            description: "Please check your Firestore security rules to allow read access.",
-        });
+        // Do not toast permission errors for unauthenticated users
     });
 
     const settingsDocRef = doc(db, "clubSettings", "main");
@@ -76,7 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         unsubscribeFamilies();
         unsubscribeSettings();
     };
-  }, [toast, user]);
+  }, [user, db]);
 
   useEffect(() => {
     if (!auth) {

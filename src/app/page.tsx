@@ -23,7 +23,10 @@ export default function Home() {
 
   // Get all check-ins from Firestore
   React.useEffect(() => {
-    if (!db) return;
+    if (!user || !db) {
+      setAllCheckIns([]);
+      return;
+    }
     const checkInsCollection = collection(db, "checkins");
     const unsubscribe = onSnapshot(checkInsCollection, (snapshot) => {
       const checkinsData = snapshot.docs.map((docSnapshot) => {
@@ -39,7 +42,7 @@ export default function Home() {
     });
 
     return () => unsubscribe();
-  }, [db]);
+  }, [user, db]);
   
   // Filter check-ins periodically and delete expired ones
   React.useEffect(() => {
