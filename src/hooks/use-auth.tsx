@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, sendPasswordResetEmail } from 'firebase/auth';
 import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc, writeBatch, query, orderBy, getDocs } from "firebase/firestore";
 import { auth, db } from '@/lib/firebase';
 import { admins } from '@/lib/data';
@@ -22,6 +22,7 @@ interface AuthContextType {
   signInWithEmail: (email: string, password: string) => Promise<any>;
   signUpWithEmail: (name: string, email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
   updateFamilyData: (updatedFamily: Family) => void;
   createFamily: (familyName: string) => void;
   updateClubSettings: (newSettings: Partial<ClubSettings>) => Promise<void>;
@@ -232,6 +233,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
+  const sendPasswordReset = async (email: string) => {
+    if (!auth) throw new Error("Firebase not configured.");
+    return sendPasswordResetEmail(auth, email);
+  };
+
   const updateFamilyData = async (updatedFamily: Family) => {
     if (!db) return;
     const familyDocRef = doc(db, "families", updatedFamily.id);
@@ -362,7 +368,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const overallLoading = authLoading || settingsLoading || locationsLoading || (user && familiesLoading);
 
-  const value = { user, family, allFamilies, familyMember, isAdmin, loading: overallLoading, clubSettings, locations, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, updateFamilyData, createFamily, updateClubSettings, deleteFamily, addLocation, updateLocation, deleteLocation, moveLocation };
+  const value = { user, family, allFamilies, familyMember, isAdmin, loading: overallLoading, clubSettings, locations, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, sendPasswordReset, updateFamilyData, createFamily, updateClubSettings, deleteFamily, addLocation, updateLocation, deleteLocation, moveLocation };
 
   return (
     <AuthContext.Provider value={value}>
