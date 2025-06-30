@@ -16,16 +16,32 @@ export type Family = {
   members: FamilyMember[];
 };
 
-export type OperatingHours = {
-  enabled: boolean;
+export type TimeSlot = {
   open: string; // e.g., "09:00"
   close: string; // e.g., "17:00"
 };
 
+export type DailyHours = {
+  enabled: boolean;
+  slots: TimeSlot[];
+};
+
+export type OperatingHours = {
+  enabled: boolean; // Master switch for operating hours
+  monday: DailyHours;
+  tuesday: DailyHours;
+  wednesday: DailyHours;
+  thursday: DailyHours;
+  friday: DailyHours;
+  saturday: DailyHours;
+  sunday: DailyHours;
+};
+
 export type ClubLocation = {
   id: string;
-  name: string;
-  icon: string; // Changed from LucideIcon to string name
+  name:string;
+  icon: string;
+  order: number;
   operatingHours: OperatingHours;
 };
 

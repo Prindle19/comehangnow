@@ -21,6 +21,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import type { Family, ClubLocation, CheckIn } from "@/lib/types";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import { isLocationOpen } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 const CheckInSchema = z.object({
   familyId: z.string(),
@@ -146,14 +148,20 @@ export function CheckInDialog({ isOpen, onOpenChange, family, locations, onCheck
                       defaultValue={field.value}
                       className="flex flex-col space-y-1"
                     >
-                      {locations.map((location) => (
-                        <FormItem key={location.id} className="flex items-center space-x-3 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value={location.id} id={location.id} />
-                          </FormControl>
-                          <FormLabel htmlFor={location.id} className="font-normal">{location.name}</FormLabel>
-                        </FormItem>
-                      ))}
+                      {locations.map((location) => {
+                        const locationStatus = isLocationOpen(location);
+                        return (
+                          <FormItem key={location.id} className={cn("flex items-center space-x-3 space-y-0", !locationStatus.open && "text-muted-foreground")}>
+                            <FormControl>
+                              <RadioGroupItem value={location.id} id={location.id} disabled={!locationStatus.open} />
+                            </FormControl>
+                            <FormLabel htmlFor={location.id} className="font-normal">
+                                {location.name}
+                                {!locationStatus.open && <span className="text-xs ml-2">(Closed)</span>}
+                            </FormLabel>
+                          </FormItem>
+                        )
+                      })}
                     </RadioGroup>
                   </FormControl>
                   <FormMessage />

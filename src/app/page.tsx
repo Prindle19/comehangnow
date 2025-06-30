@@ -13,6 +13,7 @@ import { LogIn } from "lucide-react";
 import { collection, addDoc, deleteDoc, onSnapshot, Timestamp, doc, query, where, getDocs, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
+import { isLocationOpen } from "@/lib/utils";
 
 export default function Home() {
   const { user, family, allFamilies, signIn, clubSettings, loading, locations } = useAuth();
@@ -53,16 +54,13 @@ export default function Home() {
       const now = new Date();
       const active: CheckIn[] = [];
       const expiredIds: string[] = [];
-      const nowTimeInMinutes = now.getHours() * 60 + now.getMinutes();
-
+      
       allCheckIns.forEach((checkIn) => {
         let isExpired = checkIn.checkOutTime <= now;
 
         const location = locations.find(l => l.id === checkIn.locationId);
-        if (location?.operatingHours?.enabled) {
-          const [closeHours, closeMinutes] = location.operatingHours.close.split(':').map(Number);
-          const closeTimeInMinutes = closeHours * 60 + closeMinutes;
-          if (nowTimeInMinutes >= closeTimeInMinutes) {
+        if (location && location.operatingHours.enabled) {
+          if (!isLocationOpen(location).open) {
             isExpired = true;
           }
         }

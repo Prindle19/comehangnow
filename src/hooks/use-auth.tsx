@@ -3,10 +3,10 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
-import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc, writeBatch, getDocs } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc, writeBatch, query, orderBy, getDocs } from "firebase/firestore";
 import { auth, db } from '@/lib/firebase';
 import { admins } from '@/lib/data';
-import type { Family, FamilyMember, ClubLocation, ClubSettings } from '@/lib/types';
+import type { Family, FamilyMember, ClubLocation, ClubSettings, OperatingHours } from '@/lib/types';
 import { useToast } from './use-toast';
 
 interface AuthContextType {
@@ -24,12 +24,24 @@ interface AuthContextType {
   createFamily: (familyName: string) => void;
   updateClubSettings: (newSettings: Partial<ClubSettings>) => Promise<void>;
   deleteFamily: (familyId: string) => Promise<void>;
-  addLocation: (locationData: Omit<ClubLocation, 'id'>) => Promise<void>;
-  updateLocation: (location: ClubLocation) => Promise<void>;
+  addLocation: (locationData: Omit<ClubLocation, 'id' | 'order'>) => Promise<void>;
+  updateLocation: (location: Omit<ClubLocation, 'order'>) => Promise<void>;
   deleteLocation: (locationId: string) => Promise<void>;
+  moveLocation: (currentIndex: number, direction: 'up' | 'down') => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const getDefaultOperatingHours = (): OperatingHours => ({
+    enabled: false,
+    monday: { enabled: false, slots: [] },
+    tuesday: { enabled: false, slots: [] },
+    wednesday: { enabled: false, slots: [] },
+    thursday: { enabled: false, slots: [] },
+    friday: { enabled: false, slots: [] },
+    saturday: { enabled: false, slots: [] },
+    sunday: { enabled: false, slots: [] },
+});
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -62,7 +74,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
         setUser(user);
         if (!user) {
-            // Clear all user-specific state on sign-out
             setFamily(null);
             setFamilyMember(null);
             setIsAdmin(false);
@@ -109,8 +120,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
         
         setLocationsLoading(true);
-        const locationsCollection = collection(db, "locations");
-        unsubscribeLocations = onSnapshot(locationsCollection, async (snapshot) => {
+        const locationsQuery = query(collection(db, "locations"), orderBy("order"));
+        unsubscribeLocations = onSnapshot(locationsQuery, async (snapshot) => {
             if (snapshot.empty && isAdmin) {
                 await seedInitialLocations();
             } else {
@@ -251,9 +262,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const batch = writeBatch(db);
     const locationsCollection = collection(db, "locations");
     const defaultLocations = [
-        { name: "The Pool", icon: "Waves", operatingHours: { enabled: false, open: "09:00", close: "17:00" } },
-        { name: "The Bluffs", icon: "Mountain", operatingHours: { enabled: false, open: "09:00", close: "17:00" } },
-        { name: "The Upper Deck", icon: "Building2", operatingHours: { enabled: false, open: "09:00", close: "17:00" } },
+        { name: "The Pool", icon: "Waves", order: 0, operatingHours: getDefaultOperatingHours() },
+        { name: "The Bluffs", icon: "Mountain", order: 1, operatingHours: getDefaultOperatingHours() },
+        { name: "The Upper Deck", icon: "Building2", order: 2, operatingHours: getDefaultOperatingHours() },
     ];
     defaultLocations.forEach(loc => {
         const docRef = doc(locationsCollection);
@@ -262,21 +273,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await batch.commit();
   };
 
-  const addLocation = async (locationData: Omit<ClubLocation, 'id'>) => {
+  const addLocation = async (locationData: Omit<ClubLocation, 'id' | 'order'>) => {
     if (!db || !isAdmin) return;
     try {
-        await addDoc(collection(db, "locations"), locationData);
+        const newLocationData = {
+            ...locationData,
+            order: locations.length
+        };
+        await addDoc(collection(db, "locations"), newLocationData);
         toast({ title: "Location added" });
     } catch (error: any) {
         toast({ title: "Error adding location", description: error.message, variant: "destructive" });
     }
   };
   
-  const updateLocation = async (location: ClubLocation) => {
+  const updateLocation = async (location: Omit<ClubLocation, 'order'>) => {
     if (!db || !isAdmin) return;
     const { id, ...locationData } = location;
     try {
-        await setDoc(doc(db, "locations", id), locationData);
+        await setDoc(doc(db, "locations", id), locationData, { merge: true });
         toast({ title: "Location updated" });
     } catch (error: any) {
         toast({ title: "Error updating location", description: error.message, variant: "destructive" });
@@ -287,15 +302,43 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!db || !isAdmin) return;
     try {
         await deleteDoc(doc(db, "locations", locationId));
+        // Note: This leaves a gap in the `order` sequence, which is fine.
         toast({ title: "Location deleted" });
     } catch (error: any) {
         toast({ title: "Error deleting location", description: error.message, variant: "destructive" });
     }
   };
 
+  const moveLocation = async (currentIndex: number, direction: 'up' | 'down') => {
+    if (!db || !isAdmin) return;
+    const otherIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    
+    if (otherIndex < 0 || otherIndex >= locations.length) {
+      return;
+    }
+
+    const currentLoc = locations[currentIndex];
+    const otherLoc = locations[otherIndex];
+
+    try {
+      const batch = writeBatch(db);
+      
+      const currentRef = doc(db, "locations", currentLoc.id);
+      batch.update(currentRef, { order: otherLoc.order });
+      
+      const otherRef = doc(db, "locations", otherLoc.id);
+      batch.update(otherRef, { order: currentLoc.order });
+
+      await batch.commit();
+      toast({ title: "Location order updated" });
+    } catch (error: any) {
+      toast({ title: "Error updating order", description: error.message, variant: "destructive" });
+    }
+  };
+
   const overallLoading = authLoading || settingsLoading || (user && (familiesLoading || locationsLoading));
 
-  const value = { user, family, allFamilies, familyMember, isAdmin, loading: overallLoading, clubSettings, locations, signIn, signOut, updateFamilyData, createFamily, updateClubSettings, deleteFamily, addLocation, updateLocation, deleteLocation };
+  const value = { user, family, allFamilies, familyMember, isAdmin, loading: overallLoading, clubSettings, locations, signIn, signOut, updateFamilyData, createFamily, updateClubSettings, deleteFamily, addLocation, updateLocation, deleteLocation, moveLocation };
 
   return (
     <AuthContext.Provider value={value}>

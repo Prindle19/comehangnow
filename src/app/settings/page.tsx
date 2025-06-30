@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, LogIn, Trash2, Package2, PlusCircle, Pencil } from "lucide-react";
+import { User, LogIn, Trash2, Package2, PlusCircle, Pencil, ArrowDown, ArrowUp } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,7 +34,7 @@ type ClubSettingsFormValues = z.infer<typeof ClubSettingsSchema>;
 
 
 export default function SettingsPage() {
-  const { user, family, allFamilies, signIn, isAdmin, clubSettings, updateClubSettings, deleteFamily, loading, locations, addLocation, updateLocation, deleteLocation } = useAuth();
+  const { user, family, allFamilies, signIn, isAdmin, clubSettings, updateClubSettings, deleteFamily, loading, locations, addLocation, updateLocation, deleteLocation, moveLocation } = useAuth();
   const { toast } = useToast();
   const [familyToDelete, setFamilyToDelete] = React.useState<Family | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -100,10 +100,11 @@ export default function SettingsPage() {
   };
 
   const handleLocationSave = (locationData: any) => {
+    const { id, ...dataToSave } = locationData;
     if (locationToEdit) {
-      updateLocation({ ...locationToEdit, ...locationData });
+      updateLocation({ id: locationToEdit.id, ...dataToSave });
     } else {
-      addLocation(locationData);
+      addLocation(dataToSave);
     }
   };
 
@@ -159,7 +160,7 @@ export default function SettingsPage() {
     <div className="container mx-auto p-4 md:p-8">
       <h1 className="text-3xl font-bold font-headline mb-8">Settings</h1>
       <Tabs defaultValue="notifications" className="w-full">
-        <TabsList className={cn("grid w-full grid-cols-1", isAdmin ? "md:grid-cols-3 md:w-auto" : "md:w-auto")}>
+        <TabsList className={cn("grid w-full", isAdmin ? "sm:grid-cols-3" : "grid-cols-1")}>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           {isAdmin && <TabsTrigger value="customization">Community Customization</TabsTrigger>}
           {isAdmin && <TabsTrigger value="locations">Locations</TabsTrigger>}
@@ -282,7 +283,7 @@ export default function SettingsPage() {
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {locations.map((loc) => {
+                        {locations.map((loc, index) => {
                             const Icon = getIcon(loc.icon);
                             return (
                                 <div key={loc.id} className="flex items-center justify-between p-4 rounded-lg border">
@@ -290,12 +291,15 @@ export default function SettingsPage() {
                                         <Icon className="h-6 w-6 text-muted-foreground" />
                                         <div>
                                             <span className="font-medium">{loc.name}</span>
-                                            <p className="text-sm text-muted-foreground">
-                                                {loc.operatingHours.enabled ? `${loc.operatingHours.open} - ${loc.operatingHours.close}` : 'Always open'}
-                                            </p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
+                                        <Button variant="outline" size="icon" onClick={() => moveLocation(index, 'up')} disabled={index === 0}>
+                                            <ArrowUp className="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="outline" size="icon" onClick={() => moveLocation(index, 'down')} disabled={index === locations.length - 1}>
+                                            <ArrowDown className="h-4 w-4" />
+                                        </Button>
                                         <Button variant="outline" size="icon" onClick={() => handleOpenLocationDialog(loc)}>
                                             <Pencil className="h-4 w-4" />
                                         </Button>
