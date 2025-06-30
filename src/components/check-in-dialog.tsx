@@ -90,7 +90,7 @@ export function CheckInDialog({ isOpen, onOpenChange, family, locations, onCheck
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="font-headline">{currentCheckIn ? 'Update Your Check-in' : 'Heading Out'}</DialogTitle>
+          <DialogTitle className="font-headline">{currentCheckIn ? 'Update Your Check-in' : 'Come Hang!'}</DialogTitle>
           <DialogDescription>Let everyone know where you'll be and for how long.</DialogDescription>
         </DialogHeader>
         <Form {...form}>

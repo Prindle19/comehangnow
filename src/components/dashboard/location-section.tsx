@@ -6,10 +6,13 @@ import type { CheckIn, ClubLocation, Family } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import CheckedInFamilyCard from './checked-in-family-card';
 import { getIcon } from '@/lib/icons';
-import { isLocationOpen, formatOperatingHours, formatTime } from '@/lib/utils';
+import { isLocationOpen, formatOperatingHours, formatTime, formatNextChange } from '@/lib/utils';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
-import { Clock } from 'lucide-react';
+import { Clock, CalendarDays } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Button } from '../ui/button';
+import WeeklyHours from './weekly-hours';
 
 interface LocationSectionProps {
   location: ClubLocation;
@@ -29,19 +32,21 @@ const LocationStatus = ({ location }: { location: ClubLocation }) => {
   }, [location]);
 
   if (!location.operatingHours.enabled) {
-    return <Badge variant="secondary">Always Open</Badge>;
+    return null;
   }
   
-  const { open, nextChange, currentSlots } = status;
+  const { open, nextChangeDate } = status;
 
   if (open) {
     return (
       <div className="flex items-center gap-2">
         <Badge variant="default" className="bg-green-500 hover:bg-green-500/90 text-white">Open</Badge>
-        <p className="text-sm text-muted-foreground flex items-center gap-1">
-            <Clock className="h-3 w-3"/>
-            {currentSlots && `Closes at ${formatTime(nextChange!)}`}
-        </p>
+        {nextChangeDate && (
+            <p className="text-sm text-muted-foreground flex items-center gap-1">
+                <Clock className="h-3 w-3"/>
+                Closes {formatNextChange(nextChangeDate)}
+            </p>
+        )}
       </div>
     );
   }
@@ -49,10 +54,10 @@ const LocationStatus = ({ location }: { location: ClubLocation }) => {
   return (
     <div className="flex items-center gap-2">
       <Badge variant="destructive">Closed</Badge>
-        {nextChange && (
+        {nextChangeDate && (
             <p className="text-sm text-muted-foreground flex items-center gap-1">
                 <Clock className="h-3 w-3"/>
-                {`Opens at ${formatTime(nextChange)}`}
+                Opens {formatNextChange(nextChangeDate)}
             </p>
         )}
     </div>
@@ -88,7 +93,22 @@ export default function LocationSection({
                 <Icon className="h-8 w-8 text-primary" />
                 {location.name}
             </CardTitle>
-            <LocationStatus location={location} />
+            <div className="flex items-center gap-2">
+              <LocationStatus location={location} />
+              {location.operatingHours.enabled && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                      <CalendarDays className="h-4 w-4" />
+                      <span className="sr-only">View weekly hours</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80">
+                    <WeeklyHours operatingHours={location.operatingHours} />
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
         </div>
       </CardHeader>
       <CardContent>
