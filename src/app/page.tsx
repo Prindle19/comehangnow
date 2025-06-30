@@ -161,7 +161,7 @@ export default function Home() {
                     <CardTitle className="font-headline">Welcome to {clubSettings.name}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="mb-6 text-muted-foreground">Please sign in to see who's around and check in your family.</p>
+                    <p className="mb-6 text-muted-foreground">Please sign in to see who's hanging out and let folks know you're here.</p>
                     <Button asChild size="lg">
                         <Link href="/login"><LogIn className="mr-2 h-5 w-5" /> Sign In</Link>
                     </Button>
@@ -174,11 +174,11 @@ export default function Home() {
   return (
     <div className="container mx-auto p-4 md:p-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold font-headline">Who's Around</h1>
+        <h1 className="text-3xl font-bold font-headline">Who's Hanging?</h1>
         {family && (
           <div className="flex gap-2">
             <Button onClick={() => setCheckInDialogOpen(true)} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-              {familyCheckIn ? "Update Check-in" : "Check In"}
+              {familyCheckIn ? "Update Hang" : "Hang Now"}
             </Button>
             {familyCheckIn && (
               <Button onClick={() => handleLeave(family.id)} size="lg" variant="destructive">

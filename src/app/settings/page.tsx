@@ -175,7 +175,7 @@ export default function SettingsPage() {
             <CardHeader>
               <CardTitle className="font-headline">{isAdmin ? "Family Management" : "Notification Preferences"}</CardTitle>
               <CardDescription>
-                {isAdmin ? "Manage all families in the community." : "Choose which families you want to receive check-in notifications from."}
+                {isAdmin ? "Manage all families in the community." : "Choose which families you want to receive notifications from when they hang out."}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">

@@ -79,7 +79,7 @@ export function CheckInDialog({ isOpen, onOpenChange, family, locations, onCheck
   const onSubmit = (data: CheckInFormValues) => {
     onCheckIn(data.familyId, data.memberIds, data.locationId, parseInt(data.duration, 10));
     toast({
-      title: currentCheckIn ? "Check-in Updated!" : "Check-in successful!",
+      title: currentCheckIn ? "Hang Updated!" : "You're hanging out!",
       description: `Have a great time!`,
     });
     form.reset();
@@ -90,7 +90,7 @@ export function CheckInDialog({ isOpen, onOpenChange, family, locations, onCheck
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="font-headline">{currentCheckIn ? 'Update Your Check-in' : 'Come Hang!'}</DialogTitle>
+          <DialogTitle className="font-headline">{currentCheckIn ? 'Update Your Hang' : 'Come Hang!'}</DialogTitle>
           <DialogDescription>Let everyone know where you'll be and for how long.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -101,8 +101,8 @@ export function CheckInDialog({ isOpen, onOpenChange, family, locations, onCheck
               render={() => (
                 <FormItem>
                   <div className="mb-4">
-                    <FormLabel className="text-base">Who is going?</FormLabel>
-                    <FormDescription>Select all family members checking in.</FormDescription>
+                    <FormLabel className="text-base">Who's hanging?</FormLabel>
+                    <FormDescription>Select all family members hanging.</FormDescription>
                   </div>
                   {family.members.filter(m => m.status === 'active').map((member) => (
                     <FormField
@@ -195,7 +195,7 @@ export function CheckInDialog({ isOpen, onOpenChange, family, locations, onCheck
             />
 
             <DialogFooter>
-              <Button type="submit" className="bg-accent hover:bg-accent/90 text-accent-foreground">{currentCheckIn ? 'Update Check-in' : 'Check In'}</Button>
+              <Button type="submit" className="bg-accent hover:bg-accent/90 text-accent-foreground">{currentCheckIn ? 'Update Hang' : 'Hang Now'}</Button>
             </DialogFooter>
           </form>
         </Form>
