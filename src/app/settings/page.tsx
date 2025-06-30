@@ -155,31 +155,30 @@ export default function SettingsPage() {
     );
   }
 
-  const familiesForAdminView = isAdmin ? allFamilies : allFamilies.filter(f => f.id !== family?.id);
-
   return (
     <div className="container mx-auto p-4 md:p-8">
       <h1 className="text-3xl font-bold font-headline mb-8">Settings</h1>
       <Tabs defaultValue="notifications" className="w-full">
         <TabsList className={cn(
           "w-full",
-          isAdmin ? "grid h-auto grid-cols-1 sm:h-10 sm:grid-cols-3" : "grid grid-cols-1"
+          isAdmin ? "grid h-auto grid-cols-1 sm:h-10 sm:grid-cols-4" : "grid grid-cols-1"
         )}>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           {isAdmin && <TabsTrigger value="customization">Community Customization</TabsTrigger>}
           {isAdmin && <TabsTrigger value="locations">Locations</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="family-management">Family Management</TabsTrigger>}
         </TabsList>
         
         <TabsContent value="notifications">
           <Card>
             <CardHeader>
-              <CardTitle className="font-headline">{isAdmin ? "Family Management" : "Notification Preferences"}</CardTitle>
+              <CardTitle className="font-headline">Notification Preferences</CardTitle>
               <CardDescription>
-                {isAdmin ? "Manage all families in the community." : "Choose which families you want to receive notifications from when they hang out."}
+                Choose which families you want to receive notifications from when they hang out.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {familiesForAdminView.map((fam) => (
+              {allFamilies.filter(f => f.id !== family?.id).map((fam) => (
                 <div key={fam.id} className="flex items-center justify-between p-4 rounded-lg border">
                     <div className="flex items-center space-x-4">
                         <Avatar data-ai-hint="family logo">
@@ -189,30 +188,7 @@ export default function SettingsPage() {
                         <span className="font-medium">{fam.name}</span>
                     </div>
                     <div className="flex items-center gap-4">
-                        {!isAdmin && <Switch id={`notifications-${fam.id}`} defaultChecked={Math.random() > 0.5} />}
-                        {isAdmin && fam.id !== family?.id && (
-                             <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" size="icon" onClick={() => setFamilyToDelete(fam)}>
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </AlertDialogTrigger>
-                                {familyToDelete?.id === fam.id && (
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This action cannot be undone. This will permanently delete the <strong>{familyToDelete.name}</strong> family and all of its data.
-                                    </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                    <AlertDialogCancel onClick={() => setFamilyToDelete(null)}>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleDeleteFamily}>Continue</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                                )}
-                            </AlertDialog>
-                        )}
+                        <Switch id={`notifications-${fam.id}`} defaultChecked={Math.random() > 0.5} />
                     </div>
                 </div>
               ))}
@@ -221,118 +197,168 @@ export default function SettingsPage() {
         </TabsContent>
         
         {isAdmin && (
-            <TabsContent value="customization">
-                <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline">Community Customization</CardTitle>
-                        <CardDescription>
-                            Update your community's branding and settings.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        <FormField
-                            control={form.control}
-                            name="name"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <Label htmlFor="clubName">Community Name</Label>
-                                    <FormControl>
-                                        <Input id="clubName" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <div className="space-y-2">
-                            <Label htmlFor="logo">Community Logo</Label>
-                            <div className="flex items-center gap-4">
-                                <Avatar className="h-16 w-16" data-ai-hint="community logo">
-                                    <AvatarImage src={logoUrl || undefined} />
-                                    <AvatarFallback><Package2 className="h-8 w-8" /></AvatarFallback>
-                                </Avatar>
-                                <Button variant="outline" type="button" onClick={() => fileInputRef.current?.click()}>Upload New Logo</Button>
-                                <input type="file" ref={fileInputRef} onChange={handleLogoChange} accept="image/*" className="hidden" />
-                            </div>
-                        </div>
-                        <div className="space-y-4">
-                            <Label>Admin Users</Label>
+            <>
+                <TabsContent value="customization">
+                    <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="font-headline">Community Customization</CardTitle>
                             <CardDescription>
-                                Admins can manage community settings. This list is managed in the file <code>src/lib/data.ts</code>.
+                                Update your community's branding and settings.
                             </CardDescription>
-                            <ul className="list-disc pl-5 text-sm text-muted-foreground">
-                                {admins.map(email => <li key={email}>{email}</li>)}
-                            </ul>
-                        </div>
-                        <Button type="submit" disabled={!form.formState.isDirty} className="bg-accent hover:bg-accent/90 text-accent-foreground">Save Changes</Button>
-                    </CardContent>
-                </Card>
-                </form>
-                </Form>
-            </TabsContent>
-        )}
-        {isAdmin && (
-            <TabsContent value="locations">
-                <Card>
-                    <CardHeader>
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <CardTitle className="font-headline">Manage Locations</CardTitle>
-                                <CardDescription>Add, edit, or delete check-in locations.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <FormField
+                                control={form.control}
+                                name="name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <Label htmlFor="clubName">Community Name</Label>
+                                        <FormControl>
+                                            <Input id="clubName" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <div className="space-y-2">
+                                <Label htmlFor="logo">Community Logo</Label>
+                                <div className="flex items-center gap-4">
+                                    <Avatar className="h-16 w-16" data-ai-hint="community logo">
+                                        <AvatarImage src={logoUrl || undefined} />
+                                        <AvatarFallback><Package2 className="h-8 w-8" /></AvatarFallback>
+                                    </Avatar>
+                                    <Button variant="outline" type="button" onClick={() => fileInputRef.current?.click()}>Upload New Logo</Button>
+                                    <input type="file" ref={fileInputRef} onChange={handleLogoChange} accept="image/*" className="hidden" />
+                                </div>
                             </div>
-                            <Button onClick={() => handleOpenLocationDialog()}>
-                                <PlusCircle className="mr-2 h-4 w-4"/> Add Location
-                            </Button>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {locations.map((loc, index) => {
-                            const Icon = getIcon(loc.icon);
-                            return (
-                                <div key={loc.id} className="flex items-center justify-between p-4 rounded-lg border">
-                                    <div className="flex items-center space-x-4">
-                                        <Icon className="h-6 w-6 text-muted-foreground" />
-                                        <div>
-                                            <span className="font-medium">{loc.name}</span>
+                            <div className="space-y-4">
+                                <Label>Admin Users</Label>
+                                <CardDescription>
+                                    Admins can manage community settings. This list is managed in the file <code>src/lib/data.ts</code>.
+                                </CardDescription>
+                                <ul className="list-disc pl-5 text-sm text-muted-foreground">
+                                    {admins.map(email => <li key={email}>{email}</li>)}
+                                </ul>
+                            </div>
+                            <Button type="submit" disabled={!form.formState.isDirty} className="bg-accent hover:bg-accent/90 text-accent-foreground">Save Changes</Button>
+                        </CardContent>
+                    </Card>
+                    </form>
+                    </Form>
+                </TabsContent>
+            
+                <TabsContent value="locations">
+                    <Card>
+                        <CardHeader>
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <CardTitle className="font-headline">Manage Locations</CardTitle>
+                                    <CardDescription>Add, edit, or delete check-in locations.</CardDescription>
+                                </div>
+                                <Button onClick={() => handleOpenLocationDialog()}>
+                                    <PlusCircle className="mr-2 h-4 w-4"/> Add Location
+                                </Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {locations.map((loc, index) => {
+                                const Icon = getIcon(loc.icon);
+                                return (
+                                    <div key={loc.id} className="flex items-center justify-between p-4 rounded-lg border">
+                                        <div className="flex items-center space-x-4">
+                                            <Icon className="h-6 w-6 text-muted-foreground" />
+                                            <div>
+                                                <span className="font-medium">{loc.name}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Button variant="outline" size="icon" onClick={() => moveLocation(index, 'up')} disabled={index === 0}>
+                                                <ArrowUp className="h-4 w-4" />
+                                            </Button>
+                                            <Button variant="outline" size="icon" onClick={() => moveLocation(index, 'down')} disabled={index === locations.length - 1}>
+                                                <ArrowDown className="h-4 w-4" />
+                                            </Button>
+                                            <Button variant="outline" size="icon" onClick={() => handleOpenLocationDialog(loc)}>
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="destructive" size="icon" onClick={() => setLocationToDelete(loc)}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                {locationToDelete?.id === loc.id && (
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                            <AlertDialogDescription>This will permanently delete the <strong>{locationToDelete.name}</strong> location.</AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel onClick={() => setLocationToDelete(null)}>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={handleDeleteLocation}>Continue</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                )}
+                                            </AlertDialog>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <Button variant="outline" size="icon" onClick={() => moveLocation(index, 'up')} disabled={index === 0}>
-                                            <ArrowUp className="h-4 w-4" />
-                                        </Button>
-                                        <Button variant="outline" size="icon" onClick={() => moveLocation(index, 'down')} disabled={index === locations.length - 1}>
-                                            <ArrowDown className="h-4 w-4" />
-                                        </Button>
-                                        <Button variant="outline" size="icon" onClick={() => handleOpenLocationDialog(loc)}>
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
+                                );
+                            })}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="family-management">
+                    <Card>
+                        <CardHeader>
+                        <CardTitle className="font-headline">Family Management</CardTitle>
+                        <CardDescription>
+                            Manage all families in the community.
+                        </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                        {allFamilies.map((fam) => (
+                            <div key={fam.id} className="flex items-center justify-between p-4 rounded-lg border">
+                                <div className="flex items-center space-x-4">
+                                    <Avatar data-ai-hint="family logo">
+                                        <AvatarImage src={undefined} />
+                                        <AvatarFallback>{getInitials(fam.name)}</AvatarFallback>
+                                    </Avatar>
+                                    <span className="font-medium">{fam.name}</span>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    {fam.id !== family?.id && (
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
-                                                <Button variant="destructive" size="icon" onClick={() => setLocationToDelete(loc)}>
+                                                <Button variant="destructive" size="icon" onClick={() => setFamilyToDelete(fam)}>
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </AlertDialogTrigger>
-                                            {locationToDelete?.id === loc.id && (
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                        <AlertDialogDescription>This will permanently delete the <strong>{locationToDelete.name}</strong> location.</AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel onClick={() => setLocationToDelete(null)}>Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={handleDeleteLocation}>Continue</AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
+                                            {familyToDelete?.id === fam.id && (
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This action cannot be undone. This will permanently delete the <strong>{familyToDelete.name}</strong> family and all of its data.
+                                                </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                <AlertDialogCancel onClick={() => setFamilyToDelete(null)}>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={handleDeleteFamily}>Continue</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
                                             )}
                                         </AlertDialog>
-                                    </div>
+                                    )}
                                 </div>
-                            );
-                        })}
-                    </CardContent>
-                </Card>
-            </TabsContent>
+                            </div>
+                        ))}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </>
         )}
       </Tabs>
       <LocationDialog

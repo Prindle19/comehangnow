@@ -65,14 +65,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [clubSettings.name, settingsLoading]);
 
+  // Fetch settings (public)
   useEffect(() => {
     if (!db) {
       setSettingsLoading(false);
-      setLocationsLoading(false);
-      setFamiliesLoading(false);
       return;
     }
-
     const settingsDocRef = doc(db, "clubSettings", "main");
     const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
         if (docSnap.exists()) {
@@ -87,11 +85,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSettingsLoading(false);
     });
 
-    return () => {
-        unsubscribeSettings();
-    };
+    return () => unsubscribeSettings();
   }, [db]);
+  
+  // Fetch locations (public)
+  useEffect(() => {
+    if (!db) {
+      setLocationsLoading(false);
+      return;
+    }
+    setLocationsLoading(true);
+    const locationsQuery = query(collection(db, "locations"), orderBy("order"));
+    const unsubscribeLocations = onSnapshot(locationsQuery, async (snapshot) => {
+        if (snapshot.empty && isAdmin) {
+            await seedInitialLocations();
+        } else {
+            const locationsData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as ClubLocation));
+            setLocations(locationsData);
+        }
+        setLocationsLoading(false);
+    }, (error) => {
+        console.error("Error fetching locations:", error);
+        setLocationsLoading(false);
+    });
+    
+    return () => unsubscribeLocations();
+  }, [db, isAdmin]);
 
+  // Auth state listener
   useEffect(() => {
     if (!auth) {
         setAuthLoading(false);
@@ -107,58 +128,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setFamilyMember(null);
             setIsAdmin(false);
             setAllFamilies([]);
-            setLocations([]);
         }
         setAuthLoading(false);
     });
     return () => unsubscribeAuth();
   }, []);
 
+  // Fetch families (private)
   useEffect(() => {
-    if (!db) return;
-    
-    let unsubscribeFamilies = () => {};
-    let unsubscribeLocations = () => {};
-
-    if (user) {
-        setFamiliesLoading(true);
-        const familiesCollection = collection(db, "families");
-        unsubscribeFamilies = onSnapshot(familiesCollection, (snapshot) => {
-            const familiesData = snapshot.docs.map(doc => ({ ...doc.data() as Omit<Family, 'id'>, id: doc.id }));
-            setAllFamilies(familiesData);
-            setFamiliesLoading(false);
-        }, (error) => {
-            console.error("Error fetching families:", error);
-            setFamiliesLoading(false);
-        });
-        
-        setLocationsLoading(true);
-        const locationsQuery = query(collection(db, "locations"), orderBy("order"));
-        unsubscribeLocations = onSnapshot(locationsQuery, async (snapshot) => {
-            if (snapshot.empty && isAdmin) {
-                await seedInitialLocations();
-            } else {
-                const locationsData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as ClubLocation));
-                setLocations(locationsData);
-            }
-            setLocationsLoading(false);
-        }, (error) => {
-            console.error("Error fetching locations:", error);
-            setLocationsLoading(false);
-        });
-
-    } else {
-      // If no user, ensure loading flags are false
-      setFamiliesLoading(false);
-      setLocationsLoading(false);
+    if (!db || !user) {
+        setFamiliesLoading(false);
+        return;
     }
+    setFamiliesLoading(true);
+    const familiesCollection = collection(db, "families");
+    const unsubscribeFamilies = onSnapshot(familiesCollection, (snapshot) => {
+        const familiesData = snapshot.docs.map(doc => ({ ...doc.data() as Omit<Family, 'id'>, id: doc.id }));
+        setAllFamilies(familiesData);
+        setFamiliesLoading(false);
+    }, (error) => {
+        console.error("Error fetching families:", error);
+        setFamiliesLoading(false);
+    });
 
-    return () => {
-        unsubscribeFamilies();
-        unsubscribeLocations();
-    };
-  }, [user, db, isAdmin]);
+    return () => unsubscribeFamilies();
+  }, [user, db]);
 
+  // Derive user's family and member info
   useEffect(() => {
     if (!user) {
       setFamily(null);
@@ -364,7 +360,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const overallLoading = authLoading || settingsLoading || (user && (familiesLoading || locationsLoading));
+  const overallLoading = authLoading || settingsLoading || locationsLoading || (user && familiesLoading);
 
   const value = { user, family, allFamilies, familyMember, isAdmin, loading: overallLoading, clubSettings, locations, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, updateFamilyData, createFamily, updateClubSettings, deleteFamily, addLocation, updateLocation, deleteLocation, moveLocation };
 
