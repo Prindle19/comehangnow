@@ -2,6 +2,7 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -34,7 +35,7 @@ type ClubSettingsFormValues = z.infer<typeof ClubSettingsSchema>;
 
 
 export default function SettingsPage() {
-  const { user, family, allFamilies, signIn, isAdmin, clubSettings, updateClubSettings, deleteFamily, loading, locations, addLocation, updateLocation, deleteLocation, moveLocation } = useAuth();
+  const { user, family, allFamilies, isAdmin, clubSettings, updateClubSettings, deleteFamily, loading, locations, addLocation, updateLocation, deleteLocation, moveLocation } = useAuth();
   const { toast } = useToast();
   const [familyToDelete, setFamilyToDelete] = React.useState<Family | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -145,8 +146,8 @@ export default function SettingsPage() {
                 </CardHeader>
                 <CardContent>
                     <p className="mb-6 text-muted-foreground">Please sign in to manage your settings.</p>
-                    <Button onClick={signIn} size="lg">
-                        <LogIn className="mr-2 h-5 w-5" /> Sign In with Google
+                    <Button asChild size="lg">
+                        <Link href="/login"><LogIn className="mr-2 h-5 w-5" /> Sign In</Link>
                     </Button>
                 </CardContent>
             </Card>

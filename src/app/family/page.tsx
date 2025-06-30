@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function FamilyPage() {
-  const { user, family, familyMember, updateFamilyData, signIn, createFamily, loading } = useAuth();
+  const { user, family, familyMember, updateFamilyData, createFamily, loading } = useAuth();
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [isInviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [isCreateFamilyDialogOpen, setCreateFamilyDialogOpen] = useState(false);
@@ -95,8 +96,8 @@ export default function FamilyPage() {
                 </CardHeader>
                 <CardContent>
                     <p className="mb-6 text-muted-foreground">Please sign in to view and manage your family members.</p>
-                    <Button onClick={signIn} size="lg">
-                        <LogIn className="mr-2 h-5 w-5" /> Sign In with Google
+                    <Button asChild size="lg">
+                        <Link href="/login"><LogIn className="mr-2 h-5 w-5" /> Sign In</Link>
                     </Button>
                 </CardContent>
             </Card>

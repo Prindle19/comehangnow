@@ -18,7 +18,7 @@ const navLinks = [
 
 export function Header() {
   const pathname = usePathname();
-  const { user, signIn, signOut, familyMember, clubSettings } = useAuth();
+  const { user, signOut, familyMember, clubSettings } = useAuth();
   
   const userAvatarUrl = familyMember?.avatarUrl || user?.photoURL;
   const userAvatarSrc = userAvatarUrl && !userAvatarUrl.includes('placehold.co') ? userAvatarUrl : undefined;
@@ -91,7 +91,9 @@ export function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button onClick={signIn}>Sign In</Button>
+            <Button asChild>
+              <Link href="/login">Sign In</Link>
+            </Button>
           )}
         </div>
       </div>

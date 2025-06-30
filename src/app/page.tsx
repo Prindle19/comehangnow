@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { isLocationOpen } from "@/lib/utils";
 
 export default function Home() {
-  const { user, family, allFamilies, signIn, clubSettings, loading, locations } = useAuth();
+  const { user, family, allFamilies, clubSettings, loading, locations } = useAuth();
   const [allCheckIns, setAllCheckIns] = React.useState<CheckIn[]>([]);
   const [activeCheckIns, setActiveCheckIns] = React.useState<CheckIn[]>([]);
   const [isCheckInDialogOpen, setCheckInDialogOpen] = React.useState(false);
@@ -162,8 +162,8 @@ export default function Home() {
                 </CardHeader>
                 <CardContent>
                     <p className="mb-6 text-muted-foreground">Please sign in to see who's around and check in your family.</p>
-                    <Button onClick={signIn} size="lg">
-                        <LogIn className="mr-2 h-5 w-5" /> Sign In with Google
+                    <Button asChild size="lg">
+                        <Link href="/login"><LogIn className="mr-2 h-5 w-5" /> Sign In</Link>
                     </Button>
                 </CardContent>
             </Card>

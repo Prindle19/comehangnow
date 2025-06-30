@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
+import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc, writeBatch, query, orderBy, getDocs } from "firebase/firestore";
 import { auth, db } from '@/lib/firebase';
 import { admins } from '@/lib/data';
@@ -18,7 +18,9 @@ interface AuthContextType {
   loading: boolean;
   clubSettings: ClubSettings;
   locations: ClubLocation[];
-  signIn: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<any>;
+  signUpWithEmail: (name: string, email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
   updateFamilyData: (updatedFamily: Family) => void;
   createFamily: (familyName: string) => void;
@@ -64,37 +66,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [clubSettings.name, settingsLoading]);
 
   useEffect(() => {
-    if (!auth) {
-        setAuthLoading(false);
-        setSettingsLoading(false);
-        setFamiliesLoading(false);
-        setLocationsLoading(false);
-        return;
-    }
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-        setUser(user);
-        if (!user) {
-            setFamily(null);
-            setFamilyMember(null);
-            setIsAdmin(false);
-            setAllFamilies([]);
-            setLocations([]);
-        } else {
-            setIsAdmin(admins.includes(user.email || ''));
-        }
-        setAuthLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
     if (!db) {
       setSettingsLoading(false);
+      setLocationsLoading(false);
+      setFamiliesLoading(false);
       return;
     }
-    
+
     const settingsDocRef = doc(db, "clubSettings", "main");
-    const unsubscribeSettings = onSnapshot(settingsDocRef, async (docSnap) => {
+    const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
         if (docSnap.exists()) {
             setClubSettings(docSnap.data() as ClubSettings);
         } else {
@@ -102,8 +82,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setClubSettings(defaultSettings);
         }
         setSettingsLoading(false);
+    }, (error) => {
+        console.error("Error fetching club settings:", error);
+        setSettingsLoading(false);
     });
 
+    return () => {
+        unsubscribeSettings();
+    };
+  }, [db]);
+
+  useEffect(() => {
+    if (!auth) {
+        setAuthLoading(false);
+        return;
+    }
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+        setUser(user);
+        if (user) {
+            setIsAdmin(admins.includes(user.email || ''));
+        } else {
+            // Clear all user-specific data on logout
+            setFamily(null);
+            setFamilyMember(null);
+            setIsAdmin(false);
+            setAllFamilies([]);
+            setLocations([]);
+        }
+        setAuthLoading(false);
+    });
+    return () => unsubscribeAuth();
+  }, []);
+
+  useEffect(() => {
+    if (!db) return;
+    
     let unsubscribeFamilies = () => {};
     let unsubscribeLocations = () => {};
 
@@ -135,12 +148,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
 
     } else {
+      // If no user, ensure loading flags are false
       setFamiliesLoading(false);
       setLocationsLoading(false);
     }
 
     return () => {
-        unsubscribeSettings();
         unsubscribeFamilies();
         unsubscribeLocations();
     };
@@ -175,7 +188,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user, allFamilies]);
 
-  const signIn = async () => {
+  const signInWithGoogle = async () => {
     if (!auth) {
         toast({
             variant: "destructive",
@@ -196,7 +209,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 description: error.message,
             });
         }
+        throw error;
     }
+  };
+  
+  const signInWithEmail = async (email: string, password: string) => {
+    if (!auth) throw new Error("Firebase not configured.");
+    return signInWithEmailAndPassword(auth, email, password);
+  };
+  
+  const signUpWithEmail = async (name: string, email: string, password: string) => {
+      if (!auth) throw new Error("Firebase not configured.");
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(userCredential.user, { displayName: name });
+      // Re-set user to trigger profile update
+      setUser({ ...userCredential.user, displayName: name });
+      return userCredential;
   };
 
   const signOut = async () => {
@@ -338,7 +366,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const overallLoading = authLoading || settingsLoading || (user && (familiesLoading || locationsLoading));
 
-  const value = { user, family, allFamilies, familyMember, isAdmin, loading: overallLoading, clubSettings, locations, signIn, signOut, updateFamilyData, createFamily, updateClubSettings, deleteFamily, addLocation, updateLocation, deleteLocation, moveLocation };
+  const value = { user, family, allFamilies, familyMember, isAdmin, loading: overallLoading, clubSettings, locations, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, updateFamilyData, createFamily, updateClubSettings, deleteFamily, addLocation, updateLocation, deleteLocation, moveLocation };
 
   return (
     <AuthContext.Provider value={value}>
