@@ -169,17 +169,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (foundFamily) {
         setFamily(foundFamily);
         const member = foundFamily.members.find(m => m.email === user.email);
-        if (member) {
-            setFamilyMember(member);
-            if (member.status === 'pending') {
-                const updatedMembers = foundFamily.members.map(m => 
-                    m.id === member.id 
-                    ? { ...m, status: 'active', name: user.displayName || m.name, avatarUrl: user.photoURL || m.avatarUrl } 
-                    : m
-                );
-                updateFamilyData({ ...foundFamily, members: updatedMembers });
-            }
-        }
+        setFamilyMember(member || null);
     } else {
         setFamily(null);
         setFamilyMember(null);
@@ -255,7 +245,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         email: user.email!,
         avatarUrl: user.photoURL || "",
         role: 'owner',
-        status: 'active'
     };
 
     const newFamily: Omit<Family, 'id'> = {
@@ -391,7 +380,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         email: user.email,
         avatarUrl: user.photoURL || "",
         role: 'member',
-        status: 'active'
     };
 
     await updateDoc(familyDocRef, {

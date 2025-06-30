@@ -7,7 +7,6 @@ export type FamilyMember = {
   avatarUrl: string;
   email: string;
   role: 'owner' | 'member';
-  status: 'active' | 'pending';
 };
 
 export type Family = {

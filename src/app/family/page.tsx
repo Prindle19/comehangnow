@@ -38,7 +38,6 @@ export default function FamilyPage() {
       email: "",
       avatarUrl: "",
       role: 'member',
-      status: 'active'
     };
     
     const updatedFamily = { ...family, members: [...members, newMember] };
@@ -148,7 +147,7 @@ export default function FamilyPage() {
         <CardContent>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {members.map((member) => (
-              <Card key={member.id} className={cn("flex flex-col items-center justify-center p-6 text-center relative", member.status === 'pending' && "bg-muted/50")}>
+              <Card key={member.id} className="flex flex-col items-center justify-center p-6 text-center relative">
                 {isOwner && member.id !== familyMember?.id && (
                   <Button variant="ghost" size="icon" className="absolute top-2 right-2 h-8 w-8" onClick={() => handleRemoveMember(member.id)}>
                     <Trash2 className="h-4 w-4 text-destructive" />
@@ -165,7 +164,6 @@ export default function FamilyPage() {
                     {member.role === 'owner' && <Crown className="w-4 h-4 text-amber-500" />}
                 </p>
                 {member.email && <p className="text-sm text-muted-foreground">{member.email}</p>}
-                {member.status === 'pending' && <Badge variant="secondary" className="mt-2">Pending Invitation</Badge>}
               </Card>
             ))}
           </div>
