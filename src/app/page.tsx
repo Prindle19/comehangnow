@@ -4,7 +4,6 @@
 import * as React from "react";
 import Link from "next/link";
 import { CheckIn, ClubLocation, Family } from "@/lib/types";
-import { clubLocations } from "@/lib/data";
 import { CheckInDialog } from "@/components/check-in-dialog";
 import LocationSection from "@/components/dashboard/location-section";
 import { Button } from "@/components/ui/button";
@@ -16,13 +15,12 @@ import { db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Home() {
-  const { user, family, allFamilies, signIn, clubSettings, loading } = useAuth();
+  const { user, family, allFamilies, signIn, clubSettings, loading, locations } = useAuth();
   const [allCheckIns, setAllCheckIns] = React.useState<CheckIn[]>([]);
   const [activeCheckIns, setActiveCheckIns] = React.useState<CheckIn[]>([]);
   const [isCheckInDialogOpen, setCheckInDialogOpen] = React.useState(false);
   const [familyCheckIn, setFamilyCheckIn] = React.useState<CheckIn | null>(null);
 
-  // Get all check-ins from Firestore
   React.useEffect(() => {
     if (!user || !db) {
       setAllCheckIns([]);
@@ -45,10 +43,9 @@ export default function Home() {
     return () => unsubscribe();
   }, [user, db]);
   
-  // Filter check-ins periodically and delete expired ones
   React.useEffect(() => {
     const processCheckIns = () => {
-      if (!allCheckIns.length) {
+      if (!allCheckIns.length || !locations.length) {
         setActiveCheckIns([]);
         return;
       };
@@ -56,9 +53,21 @@ export default function Home() {
       const now = new Date();
       const active: CheckIn[] = [];
       const expiredIds: string[] = [];
+      const nowTimeInMinutes = now.getHours() * 60 + now.getMinutes();
 
       allCheckIns.forEach((checkIn) => {
-        if (checkIn.checkOutTime > now) {
+        let isExpired = checkIn.checkOutTime <= now;
+
+        const location = locations.find(l => l.id === checkIn.locationId);
+        if (location?.operatingHours?.enabled) {
+          const [closeHours, closeMinutes] = location.operatingHours.close.split(':').map(Number);
+          const closeTimeInMinutes = closeHours * 60 + closeMinutes;
+          if (nowTimeInMinutes >= closeTimeInMinutes) {
+            isExpired = true;
+          }
+        }
+        
+        if (!isExpired) {
           active.push(checkIn);
         } else {
           expiredIds.push(checkIn.id);
@@ -67,7 +76,6 @@ export default function Home() {
 
       setActiveCheckIns(active);
 
-      // Delete expired check-ins in the background
       if (db && expiredIds.length > 0) {
         expiredIds.forEach(async (id) => {
           await deleteDoc(doc(db, "checkins", id));
@@ -75,12 +83,12 @@ export default function Home() {
       }
     };
     
-    processCheckIns(); // Run once immediately
+    processCheckIns();
     
-    const intervalId = setInterval(processCheckIns, 1000 * 10); // Run every 10 seconds
+    const intervalId = setInterval(processCheckIns, 1000 * 10);
 
     return () => clearInterval(intervalId);
-  }, [allCheckIns, db]);
+  }, [allCheckIns, db, locations]);
 
 
   React.useEffect(() => {
@@ -198,7 +206,7 @@ export default function Home() {
       )}
 
       <div className="grid gap-8">
-        {clubLocations.map((location) => (
+        {locations.map((location) => (
           <LocationSection
             key={location.id}
             location={location}
@@ -214,7 +222,7 @@ export default function Home() {
             isOpen={isCheckInDialogOpen}
             onOpenChange={setCheckInDialogOpen}
             family={family}
-            locations={clubLocations}
+            locations={locations}
             onCheckIn={handleCheckIn}
             currentCheckIn={familyCheckIn}
         />

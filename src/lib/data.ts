@@ -1,10 +1,10 @@
-import type { Family, ClubLocation } from "@/lib/types";
-import { Waves, Mountain, Building2 } from "lucide-react";
+import type { Family } from "@/lib/types";
 
 // The user with this email will have admin privileges.
 // You can add more emails to this list.
 export const admins = ['wohltman@gmail.com'];
 
+// The 'families' array is here for reference but the app uses Firestore as the source of truth.
 export const families: Family[] = [
   {
     id: "fam1",
@@ -34,10 +34,3 @@ export const families: Family[] = [
     ],
   },
 ];
-
-export const clubLocations: ClubLocation[] = [
-  { id: "loc1", name: "The Pool", icon: Waves },
-  { id: "loc2", name: "The Bluffs", icon: Mountain },
-  { id: "loc3", name: "The Upper Deck", icon: Building2 },
-];
-4

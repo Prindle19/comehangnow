@@ -5,6 +5,7 @@ import * as React from 'react';
 import type { CheckIn, ClubLocation, Family } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import CheckedInFamilyCard from './checked-in-family-card';
+import { getIcon } from '@/lib/icons';
 
 interface LocationSectionProps {
   location: ClubLocation;
@@ -30,11 +31,13 @@ export default function LocationSection({
     return Array.from(familyMap.values());
   }, [checkIns, families]);
 
+  const Icon = getIcon(location.icon);
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-3 font-headline text-2xl">
-          <location.icon className="h-8 w-8 text-primary" />
+          <Icon className="h-8 w-8 text-primary" />
           {location.name}
         </CardTitle>
       </CardHeader>

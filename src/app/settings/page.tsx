@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, LogIn, Trash2, Package2 } from "lucide-react";
+import { User, LogIn, Trash2, Package2, PlusCircle, Pencil } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,10 +19,11 @@ import { admins } from "@/lib/data";
 import { cn, getInitials } from "@/lib/utils";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import type { Family } from "@/lib/types";
-import { AlertDialogTrigger } from '@radix-ui/react-alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import type { Family, ClubLocation } from "@/lib/types";
 import { Skeleton } from '@/components/ui/skeleton';
+import { LocationDialog } from '@/components/location-dialog';
+import { getIcon } from '@/lib/icons';
 
 const ClubSettingsSchema = z.object({
   name: z.string().min(2, { message: "Community name must be at least 2 characters." }),
@@ -33,10 +34,14 @@ type ClubSettingsFormValues = z.infer<typeof ClubSettingsSchema>;
 
 
 export default function SettingsPage() {
-  const { user, family, allFamilies, signIn, isAdmin, clubSettings, updateClubSettings, deleteFamily, loading } = useAuth();
+  const { user, family, allFamilies, signIn, isAdmin, clubSettings, updateClubSettings, deleteFamily, loading, locations, addLocation, updateLocation, deleteLocation } = useAuth();
   const { toast } = useToast();
   const [familyToDelete, setFamilyToDelete] = React.useState<Family | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const [isLocationDialogOpen, setLocationDialogOpen] = React.useState(false);
+  const [locationToEdit, setLocationToEdit] = React.useState<ClubLocation | null>(null);
+  const [locationToDelete, setLocationToDelete] = React.useState<ClubLocation | null>(null);
 
   const form = useForm<ClubSettingsFormValues>({
     resolver: zodResolver(ClubSettingsSchema),
@@ -89,6 +94,26 @@ export default function SettingsPage() {
     }
   };
   
+  const handleOpenLocationDialog = (location: ClubLocation | null = null) => {
+    setLocationToEdit(location);
+    setLocationDialogOpen(true);
+  };
+
+  const handleLocationSave = (locationData: any) => {
+    if (locationToEdit) {
+      updateLocation({ ...locationToEdit, ...locationData });
+    } else {
+      addLocation(locationData);
+    }
+  };
+
+  const handleDeleteLocation = () => {
+    if (locationToDelete) {
+      deleteLocation(locationToDelete.id);
+      setLocationToDelete(null);
+    }
+  };
+  
   if (loading) {
      return (
         <div className="container mx-auto p-4 md:p-8">
@@ -134,9 +159,10 @@ export default function SettingsPage() {
     <div className="container mx-auto p-4 md:p-8">
       <h1 className="text-3xl font-bold font-headline mb-8">Settings</h1>
       <Tabs defaultValue="notifications" className="w-full">
-        <TabsList className={cn("grid w-full grid-cols-1", isAdmin ? "md:grid-cols-2 md:w-auto" : "md:w-[200px]")}>
+        <TabsList className={cn("grid w-full grid-cols-1", isAdmin ? "md:grid-cols-3 md:w-auto" : "md:w-auto")}>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           {isAdmin && <TabsTrigger value="customization">Community Customization</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="locations">Locations</TabsTrigger>}
         </TabsList>
         
         <TabsContent value="notifications">
@@ -241,7 +267,72 @@ export default function SettingsPage() {
                 </Form>
             </TabsContent>
         )}
+        {isAdmin && (
+            <TabsContent value="locations">
+                <Card>
+                    <CardHeader>
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <CardTitle className="font-headline">Manage Locations</CardTitle>
+                                <CardDescription>Add, edit, or delete check-in locations.</CardDescription>
+                            </div>
+                            <Button onClick={() => handleOpenLocationDialog()}>
+                                <PlusCircle className="mr-2 h-4 w-4"/> Add Location
+                            </Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {locations.map((loc) => {
+                            const Icon = getIcon(loc.icon);
+                            return (
+                                <div key={loc.id} className="flex items-center justify-between p-4 rounded-lg border">
+                                    <div className="flex items-center space-x-4">
+                                        <Icon className="h-6 w-6 text-muted-foreground" />
+                                        <div>
+                                            <span className="font-medium">{loc.name}</span>
+                                            <p className="text-sm text-muted-foreground">
+                                                {loc.operatingHours.enabled ? `${loc.operatingHours.open} - ${loc.operatingHours.close}` : 'Always open'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button variant="outline" size="icon" onClick={() => handleOpenLocationDialog(loc)}>
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="destructive" size="icon" onClick={() => setLocationToDelete(loc)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            {locationToDelete?.id === loc.id && (
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>This will permanently delete the <strong>{locationToDelete.name}</strong> location.</AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel onClick={() => setLocationToDelete(null)}>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={handleDeleteLocation}>Continue</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            )}
+                                        </AlertDialog>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        )}
       </Tabs>
+      <LocationDialog
+        isOpen={isLocationDialogOpen}
+        onOpenChange={setLocationDialogOpen}
+        onSave={handleLocationSave}
+        location={locationToEdit}
+    />
     </div>
   );
 }

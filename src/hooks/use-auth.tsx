@@ -3,16 +3,11 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
-import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc, writeBatch, getDocs } from "firebase/firestore";
 import { auth, db } from '@/lib/firebase';
 import { admins } from '@/lib/data';
-import type { Family, FamilyMember } from '@/lib/types';
+import type { Family, FamilyMember, ClubLocation, ClubSettings } from '@/lib/types';
 import { useToast } from './use-toast';
-
-interface ClubSettings {
-  name: string;
-  logoUrl?: string;
-}
 
 interface AuthContextType {
   user: User | null;
@@ -22,12 +17,16 @@ interface AuthContextType {
   isAdmin: boolean;
   loading: boolean;
   clubSettings: ClubSettings;
+  locations: ClubLocation[];
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
   updateFamilyData: (updatedFamily: Family) => void;
   createFamily: (familyName: string) => void;
   updateClubSettings: (newSettings: Partial<ClubSettings>) => Promise<void>;
   deleteFamily: (familyId: string) => Promise<void>;
+  addLocation: (locationData: Omit<ClubLocation, 'id'>) => Promise<void>;
+  updateLocation: (location: ClubLocation) => Promise<void>;
+  deleteLocation: (locationId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,6 +41,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [familiesLoading, setFamiliesLoading] = useState<boolean>(true);
   const [clubSettings, setClubSettings] = useState<ClubSettings>({ name: "Come Hang Now", logoUrl: "" });
   const [settingsLoading, setSettingsLoading] = useState<boolean>(true);
+  const [locations, setLocations] = useState<ClubLocation[]>([]);
+  const [locationsLoading, setLocationsLoading] = useState<boolean>(true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -55,6 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setAuthLoading(false);
         setSettingsLoading(false);
         setFamiliesLoading(false);
+        setLocationsLoading(false);
         return;
     }
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -65,6 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setFamilyMember(null);
             setIsAdmin(false);
             setAllFamilies([]);
+            setLocations([]);
         } else {
             setIsAdmin(admins.includes(user.email || ''));
         }
@@ -78,8 +81,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSettingsLoading(false);
       return;
     }
-
-    // Fetch club settings regardless of auth state for branding
+    
     const settingsDocRef = doc(db, "clubSettings", "main");
     const unsubscribeSettings = onSnapshot(settingsDocRef, async (docSnap) => {
         if (docSnap.exists()) {
@@ -87,15 +89,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
             const defaultSettings = { name: "Come Hang Now", logoUrl: "" };
             setClubSettings(defaultSettings);
-            if (user && admins.includes(user.email || '')) {
-                await setDoc(settingsDocRef, defaultSettings);
-            }
         }
         setSettingsLoading(false);
     });
 
-    // Only fetch families if user is logged in
     let unsubscribeFamilies = () => {};
+    let unsubscribeLocations = () => {};
+
     if (user) {
         setFamiliesLoading(true);
         const familiesCollection = collection(db, "families");
@@ -105,24 +105,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setFamiliesLoading(false);
         }, (error) => {
             console.error("Error fetching families:", error);
-            if (error.code === 'permission-denied') {
-                toast({
-                    title: "Permission Denied",
-                    description: "Please check your Firestore security rules.",
-                    variant: "destructive"
-                });
-            }
             setFamiliesLoading(false);
         });
+        
+        setLocationsLoading(true);
+        const locationsCollection = collection(db, "locations");
+        unsubscribeLocations = onSnapshot(locationsCollection, async (snapshot) => {
+            if (snapshot.empty && isAdmin) {
+                await seedInitialLocations();
+            } else {
+                const locationsData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as ClubLocation));
+                setLocations(locationsData);
+            }
+            setLocationsLoading(false);
+        }, (error) => {
+            console.error("Error fetching locations:", error);
+            setLocationsLoading(false);
+        });
+
     } else {
       setFamiliesLoading(false);
+      setLocationsLoading(false);
     }
 
     return () => {
         unsubscribeSettings();
         unsubscribeFamilies();
+        unsubscribeLocations();
     };
-  }, [user, db]);
+  }, [user, db, isAdmin]);
 
   useEffect(() => {
     if (!user) {
@@ -235,9 +246,56 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const overallLoading = authLoading || settingsLoading || (user && familiesLoading);
+  const seedInitialLocations = async () => {
+    if (!db) return;
+    const batch = writeBatch(db);
+    const locationsCollection = collection(db, "locations");
+    const defaultLocations = [
+        { name: "The Pool", icon: "Waves", operatingHours: { enabled: false, open: "09:00", close: "17:00" } },
+        { name: "The Bluffs", icon: "Mountain", operatingHours: { enabled: false, open: "09:00", close: "17:00" } },
+        { name: "The Upper Deck", icon: "Building2", operatingHours: { enabled: false, open: "09:00", close: "17:00" } },
+    ];
+    defaultLocations.forEach(loc => {
+        const docRef = doc(locationsCollection);
+        batch.set(docRef, loc);
+    });
+    await batch.commit();
+  };
 
-  const value = { user, family, allFamilies, familyMember, isAdmin, loading: overallLoading, clubSettings, signIn, signOut, updateFamilyData, createFamily, updateClubSettings, deleteFamily };
+  const addLocation = async (locationData: Omit<ClubLocation, 'id'>) => {
+    if (!db || !isAdmin) return;
+    try {
+        await addDoc(collection(db, "locations"), locationData);
+        toast({ title: "Location added" });
+    } catch (error: any) {
+        toast({ title: "Error adding location", description: error.message, variant: "destructive" });
+    }
+  };
+  
+  const updateLocation = async (location: ClubLocation) => {
+    if (!db || !isAdmin) return;
+    const { id, ...locationData } = location;
+    try {
+        await setDoc(doc(db, "locations", id), locationData);
+        toast({ title: "Location updated" });
+    } catch (error: any) {
+        toast({ title: "Error updating location", description: error.message, variant: "destructive" });
+    }
+  };
+  
+  const deleteLocation = async (locationId: string) => {
+    if (!db || !isAdmin) return;
+    try {
+        await deleteDoc(doc(db, "locations", locationId));
+        toast({ title: "Location deleted" });
+    } catch (error: any) {
+        toast({ title: "Error deleting location", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const overallLoading = authLoading || settingsLoading || (user && (familiesLoading || locationsLoading));
+
+  const value = { user, family, allFamilies, familyMember, isAdmin, loading: overallLoading, clubSettings, locations, signIn, signOut, updateFamilyData, createFamily, updateClubSettings, deleteFamily, addLocation, updateLocation, deleteLocation };
 
   return (
     <AuthContext.Provider value={value}>

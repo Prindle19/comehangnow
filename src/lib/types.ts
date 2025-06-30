@@ -1,5 +1,4 @@
 
-import type { LucideIcon } from "lucide-react";
 import type { Timestamp } from "firebase/firestore";
 
 export type FamilyMember = {
@@ -17,10 +16,17 @@ export type Family = {
   members: FamilyMember[];
 };
 
+export type OperatingHours = {
+  enabled: boolean;
+  open: string; // e.g., "09:00"
+  close: string; // e.g., "17:00"
+};
+
 export type ClubLocation = {
   id: string;
   name: string;
-  icon: LucideIcon;
+  icon: string; // Changed from LucideIcon to string name
+  operatingHours: OperatingHours;
 };
 
 export type CheckIn = {
