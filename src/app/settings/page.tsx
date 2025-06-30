@@ -160,7 +160,10 @@ export default function SettingsPage() {
     <div className="container mx-auto p-4 md:p-8">
       <h1 className="text-3xl font-bold font-headline mb-8">Settings</h1>
       <Tabs defaultValue="notifications" className="w-full">
-        <TabsList className={cn("grid w-full", isAdmin ? "sm:grid-cols-3" : "grid-cols-1")}>
+        <TabsList className={cn(
+          "w-full",
+          isAdmin ? "grid h-auto grid-cols-1 sm:h-10 sm:grid-cols-3" : "grid grid-cols-1"
+        )}>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           {isAdmin && <TabsTrigger value="customization">Community Customization</TabsTrigger>}
           {isAdmin && <TabsTrigger value="locations">Locations</TabsTrigger>}
