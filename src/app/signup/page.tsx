@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -25,10 +25,12 @@ const SignupSchema = z.object({
 type SignupFormValues = z.infer<typeof SignupSchema>;
 
 export default function SignupPage() {
-  const { user, signInWithGoogle, signUpWithEmail } = useAuth();
+  const { user, signInWithGoogle, signUpWithEmail, addUserToFamily } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [loading, setLoading] = React.useState(false);
+  const inviteCode = searchParams.get('invite');
 
   React.useEffect(() => {
     if (user) {
@@ -45,10 +47,24 @@ export default function SignupPage() {
     },
   });
 
+  const handleJoinFamily = async (user: any) => {
+    if (inviteCode && user) {
+        const result = await addUserToFamily(user, inviteCode);
+        if (result && !result.success) {
+            toast({
+                variant: 'destructive',
+                title: 'Could Not Join Family',
+                description: result.message
+            });
+        }
+    }
+  };
+
   const onSubmit = async (data: SignupFormValues) => {
     setLoading(true);
     try {
-      await signUpWithEmail(data.name, data.email, data.password);
+      const userCredential = await signUpWithEmail(data.name, data.email, data.password);
+      await handleJoinFamily(userCredential.user);
       router.push("/");
     } catch (error: any) {
       toast({
@@ -64,7 +80,8 @@ export default function SignupPage() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-        await signInWithGoogle();
+        const userCredential = await signInWithGoogle();
+        await handleJoinFamily(userCredential.user);
         router.push("/");
     } catch (error: any) {
         // Error is already handled in useAuth, so we just stop loading.
@@ -78,7 +95,12 @@ export default function SignupPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-2xl">Create an Account</CardTitle>
-          <CardDescription>Get started by creating a new account.</CardDescription>
+          <CardDescription>
+            {inviteCode 
+                ? "You've been invited to join a family! Create an account to accept."
+                : "Get started by creating a new account."
+            }
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Form {...form}>
@@ -145,7 +167,7 @@ export default function SignupPage() {
         <CardFooter className="justify-center">
           <p className="text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/login" className="font-semibold text-primary hover:underline">
+            <Link href={inviteCode ? `/login?invite=${inviteCode}` : "/login"} className="font-semibold text-primary hover:underline">
               Login
             </Link>
           </p>

@@ -29,24 +29,24 @@ export default function FamilyPage() {
     }
   }, [family]);
 
-  const handleAddMember = ({ name, email }: { name: string; email?: string }) => {
+  const handleAddMember = ({ name }: { name: string }) => {
     if (!family) return;
 
     const newMember: FamilyMember = {
       id: `mem${Date.now()}`,
       name,
-      email: email || "",
+      email: "",
       avatarUrl: "",
       role: 'member',
-      status: email ? 'pending' : 'active'
+      status: 'active'
     };
     
     const updatedFamily = { ...family, members: [...members, newMember] };
     updateFamilyData(updatedFamily);
 
     toast({
-        title: email ? "Invitation Sent!" : "Member Added!",
-        description: email ? `An invitation has been sent to ${email}.` : `${name} has been added to your family.`,
+        title: "Member Added!",
+        description: `${name} has been added to your family.`,
     });
   };
 
@@ -175,7 +175,8 @@ export default function FamilyPage() {
         <InviteDialog 
             isOpen={isInviteDialogOpen} 
             onOpenChange={setInviteDialogOpen} 
-            onInvite={handleAddMember}
+            onAddMember={handleAddMember}
+            familyId={family.id}
         />
       )}
     </div>

@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -24,10 +24,12 @@ const LoginSchema = z.object({
 type LoginFormValues = z.infer<typeof LoginSchema>;
 
 export default function LoginPage() {
-  const { user, signInWithGoogle, signInWithEmail } = useAuth();
+  const { user, signInWithGoogle, signInWithEmail, addUserToFamily } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [loading, setLoading] = React.useState(false);
+  const inviteCode = searchParams.get('invite');
 
   React.useEffect(() => {
     if (user) {
@@ -43,10 +45,24 @@ export default function LoginPage() {
     },
   });
 
+  const handleJoinFamily = async (user: any) => {
+    if (inviteCode && user) {
+        const result = await addUserToFamily(user, inviteCode);
+        if (result && !result.success) {
+            toast({
+                variant: 'destructive',
+                title: 'Could Not Join Family',
+                description: result.message
+            });
+        }
+    }
+  };
+
   const onSubmit = async (data: LoginFormValues) => {
     setLoading(true);
     try {
-      await signInWithEmail(data.email, data.password);
+      const userCredential = await signInWithEmail(data.email, data.password);
+      await handleJoinFamily(userCredential.user);
       router.push("/");
     } catch (error: any) {
       toast({
@@ -62,7 +78,8 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-        await signInWithGoogle();
+        const userCredential = await signInWithGoogle();
+        await handleJoinFamily(userCredential.user);
         router.push("/");
     } catch (error: any) {
         // Error is already handled in useAuth, so we just stop loading.
@@ -138,7 +155,7 @@ export default function LoginPage() {
         <CardFooter className="justify-center">
           <p className="text-sm text-muted-foreground">
             Don't have an account?{" "}
-            <Link href="/signup" className="font-semibold text-primary hover:underline">
+            <Link href={inviteCode ? `/signup?invite=${inviteCode}` : "/signup"} className="font-semibold text-primary hover:underline">
               Sign Up
             </Link>
           </p>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -17,24 +18,23 @@ import {
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 
-const InviteSchema = z.object({
+const AddMemberSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  email: z.string().email({ message: "Please enter a valid email." }).optional().or(z.literal('')),
 });
 
-type InviteFormValues = z.infer<typeof InviteSchema>;
+type AddMemberFormValues = z.infer<typeof AddMemberSchema>;
 
 interface InviteDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onInvite: (details: { name: string; email?: string }) => void;
+  onAddMember: (details: { name: string }) => void;
+  familyId: string;
 }
 
-export function InviteDialog({ isOpen, onOpenChange, onInvite }: InviteDialogProps) {
+export function InviteDialog({ isOpen, onOpenChange, onAddMember, familyId }: InviteDialogProps) {
   const [appUrl, setAppUrl] = React.useState("");
   const [copied, setCopied] = React.useState(false);
   const { toast } = useToast();
@@ -45,25 +45,24 @@ export function InviteDialog({ isOpen, onOpenChange, onInvite }: InviteDialogPro
     }
   }, []);
 
-  const invitationText = `You've been invited to join our family on Come Hang Now! Sign up here: ${appUrl}`;
+  const invitationLink = `${appUrl}/signup?invite=${familyId}`;
   
   const handleCopy = () => {
-    navigator.clipboard.writeText(invitationText);
+    navigator.clipboard.writeText(invitationLink);
     setCopied(true);
     toast({ title: "Copied to clipboard!" });
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const form = useForm<InviteFormValues>({
-    resolver: zodResolver(InviteSchema),
+  const form = useForm<AddMemberFormValues>({
+    resolver: zodResolver(AddMemberSchema),
     defaultValues: {
       name: "",
-      email: "",
     },
   });
   
-  const onSubmit = (data: InviteFormValues) => {
-    onInvite(data);
+  const onSubmit = (data: AddMemberFormValues) => {
+    onAddMember(data);
     form.reset();
     onOpenChange(false);
   };
@@ -72,72 +71,67 @@ export function InviteDialog({ isOpen, onOpenChange, onInvite }: InviteDialogPro
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="font-headline">Add a Family Member</DialogTitle>
+          <DialogTitle className="font-headline">Add or Invite Member</DialogTitle>
           <DialogDescription>
-            You can add members without an email (like children), or reserve a spot for someone by adding their email.
+            Add a member directly (like a child) or invite someone to join your family with a unique link.
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Full Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Jane Doe" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email Address (Optional)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="name@example.com" {...field} />
-                  </FormControl>
-                   <FormDescription>
-                    No email will be sent. When a user signs up with this email, they will automatically join your family.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
-            <div className="space-y-2 pt-2">
-                <Label>Or Share an Invitation Link</Label>
-                <FormDescription>
-                    Copy the text below and send it to your family member.
-                </FormDescription>
+        <div className="space-y-4 py-4">
+            <div className="space-y-2">
+                <h4 className="font-medium">Invite a member</h4>
+                <p className="text-sm text-muted-foreground">
+                    Share this link with family members you want to invite. They will be able to create their own account.
+                </p>
                 <div className="relative">
-                    <Textarea
+                    <Input
                         readOnly
-                        value={invitationText}
-                        className="pr-12 h-24 resize-none"
+                        value={invitationLink}
+                        className="pr-12"
                     />
                     <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="absolute top-2 right-2 h-8 w-8"
+                        className="absolute top-1/2 right-1.5 h-7 w-7 -translate-y-1/2"
                         onClick={handleCopy}
                     >
                         {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                        <span className="sr-only">Copy Invitation</span>
+                        <span className="sr-only">Copy Invitation Link</span>
                     </Button>
                 </div>
             </div>
 
-            <DialogFooter className="pt-4">
-              <Button type="submit" className="bg-accent hover:bg-accent/90 text-accent-foreground">Add Member</Button>
-            </DialogFooter>
-          </form>
-        </Form>
+            <Separator />
+            
+            <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div className="space-y-2">
+                    <h4 className="font-medium">Add member without an account</h4>
+                    <p className="text-sm text-muted-foreground">
+                        For family members who won't be logging in, like children.
+                    </p>
+                </div>
+
+                <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., Jane Doe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <DialogFooter className="pt-2">
+                <Button type="submit" className="bg-accent hover:bg-accent/90 text-accent-foreground">Add Member</Button>
+                </DialogFooter>
+            </form>
+            </Form>
+        </div>
       </DialogContent>
     </Dialog>
   );

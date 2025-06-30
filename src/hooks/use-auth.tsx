@@ -2,8 +2,8 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, sendPasswordResetEmail } from 'firebase/auth';
-import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc, writeBatch, query, orderBy, getDocs } from "firebase/firestore";
+import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, sendPasswordResetEmail, UserCredential } from 'firebase/auth';
+import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc, writeBatch, query, orderBy, getDocs, getDoc, arrayUnion } from "firebase/firestore";
 import { auth, db } from '@/lib/firebase';
 import { admins } from '@/lib/data';
 import type { Family, FamilyMember, ClubLocation, ClubSettings, OperatingHours } from '@/lib/types';
@@ -18,9 +18,9 @@ interface AuthContextType {
   loading: boolean;
   clubSettings: ClubSettings;
   locations: ClubLocation[];
-  signInWithGoogle: () => Promise<void>;
-  signInWithEmail: (email: string, password: string) => Promise<any>;
-  signUpWithEmail: (name: string, email: string, password: string) => Promise<any>;
+  signInWithGoogle: () => Promise<UserCredential>;
+  signInWithEmail: (email: string, password: string) => Promise<UserCredential>;
+  signUpWithEmail: (name: string, email: string, password: string) => Promise<UserCredential>;
   signOut: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   updateFamilyData: (updatedFamily: Family) => void;
@@ -31,6 +31,7 @@ interface AuthContextType {
   updateLocation: (location: Omit<ClubLocation, 'order'>) => Promise<void>;
   deleteLocation: (locationId: string) => Promise<void>;
   moveLocation: (currentIndex: number, direction: 'up' | 'down') => Promise<void>;
+  addUserToFamily: (user: User, familyId: string) => Promise<{ success: boolean; message?: string } | undefined>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -192,11 +193,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             title: "Firebase Not Configured",
             description: "Please provide Firebase credentials in a .env.local file to enable authentication.",
         });
-        return;
+        throw new Error("Firebase not configured.");
     }
     const provider = new GoogleAuthProvider();
     try {
-        await signInWithPopup(auth, provider);
+        return await signInWithPopup(auth, provider);
     } catch (error: any) {
         console.error("Error during sign-in:", error);
         if (error.code !== 'auth/popup-closed-by-user') {
@@ -366,9 +367,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const addUserToFamily = async (user: User, familyId: string) => {
+    if (!db || !user.email) return;
+
+    const familiesSnapshot = await getDocs(collection(db, "families"));
+    for (const doc of familiesSnapshot.docs) {
+        const family = doc.data() as Family;
+        if (family.members.some(m => m.email === user.email)) {
+            return { success: false, message: "This account is already part of a family." };
+        }
+    }
+
+    const familyDocRef = doc(db, "families", familyId);
+    const familyDoc = await getDoc(familyDocRef);
+
+    if (!familyDoc.exists()) {
+        return { success: false, message: "Invalid invitation link. The family may have been deleted." };
+    }
+
+    const newMember: FamilyMember = {
+        id: `mem${Date.now()}`,
+        name: user.displayName || 'New Member',
+        email: user.email,
+        avatarUrl: user.photoURL || "",
+        role: 'member',
+        status: 'active'
+    };
+
+    await updateDoc(familyDocRef, {
+        members: arrayUnion(newMember)
+    });
+    return { success: true };
+  };
+
   const overallLoading = authLoading || settingsLoading || locationsLoading || (user && familiesLoading);
 
-  const value = { user, family, allFamilies, familyMember, isAdmin, loading: overallLoading, clubSettings, locations, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, sendPasswordReset, updateFamilyData, createFamily, updateClubSettings, deleteFamily, addLocation, updateLocation, deleteLocation, moveLocation };
+  const value = { user, family, allFamilies, familyMember, isAdmin, loading: overallLoading, clubSettings, locations, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, sendPasswordReset, updateFamilyData, createFamily, updateClubSettings, deleteFamily, addLocation, updateLocation, deleteLocation, moveLocation, addUserToFamily };
 
   return (
     <AuthContext.Provider value={value}>
