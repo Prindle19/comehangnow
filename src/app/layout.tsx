@@ -8,9 +8,8 @@ import { AuthProvider } from '@/hooks/use-auth';
 import { ClubSettingsProvider } from '@/hooks/use-club-settings';
 
 export const metadata: Metadata = {
-  title: 'Come Hang Now',
+  title: 'ClubConnect',
   description: "Know who's at the club and where.",
-  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
@@ -27,7 +26,8 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap"
           rel="stylesheet"
         />
-        <meta name="theme-color" content="#89d9f5" />
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <meta name="theme-color" content="#87CEEB" />
       </head>
       <body
         className={cn(
