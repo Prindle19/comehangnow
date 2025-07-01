@@ -20,17 +20,31 @@ export async function GET() {
     }
   } catch (error) {
     console.error("Error fetching club settings for manifest:", error);
-    // Proceed with default settings if Firestore fails
   }
 
   const defaultLogo192 = "https://placehold.co/192x192.png";
   const defaultLogo512 = "https://placehold.co/512x512.png";
-
-  const manifest = {
-    name: clubSettings.name || "ClubConnect",
-    short_name: clubSettings.name || "ClubConnect",
-    description: `Check-in and see who's at ${clubSettings.name || "the club"}.`,
-    icons: [
+  
+  let icons;
+  if (clubSettings.logoUrl && clubSettings.logoUrl.startsWith('data:image')) {
+    const mimeTypeMatch = clubSettings.logoUrl.match(/data:(image\/.*?);/);
+    const type = mimeTypeMatch ? mimeTypeMatch[1] : 'image/png';
+    icons = [
+      {
+        src: clubSettings.logoUrl,
+        sizes: '192x192',
+        type: type,
+        purpose: 'any maskable'
+      },
+      {
+        src: clubSettings.logoUrl,
+        sizes: '512x512',
+        type: type,
+        purpose: 'any maskable'
+      },
+    ];
+  } else {
+    icons = [
       {
         src: clubSettings.logoUrl || defaultLogo192,
         sizes: '192x192',
@@ -43,7 +57,14 @@ export async function GET() {
         type: 'image/png',
         purpose: 'any maskable'
       },
-    ],
+    ];
+  }
+
+  const manifest = {
+    name: clubSettings.name || "ClubConnect",
+    short_name: clubSettings.name || "ClubConnect",
+    description: `Check-in and see who's at ${clubSettings.name || "the club"}.`,
+    icons: icons,
     theme_color: '#87CEEB',
     background_color: '#F0F0F0',
     start_url: '/',
