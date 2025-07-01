@@ -16,6 +16,7 @@ interface AuthContextType {
   familyMember: FamilyMember | null;
   isAdmin: boolean;
   loading: boolean;
+  settingsLoading: boolean;
   clubSettings: ClubSettings;
   locations: ClubLocation[];
   signInWithGoogle: () => Promise<UserCredential>;
@@ -390,7 +391,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const overallLoading = authLoading || settingsLoading || locationsLoading || (user && familiesLoading);
 
-  const value = { user, family, allFamilies, familyMember, isAdmin, loading: overallLoading, clubSettings, locations, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, sendPasswordReset, updateFamilyData, createFamily, updateClubSettings, deleteFamily, addLocation, updateLocation, deleteLocation, moveLocation, addUserToFamily };
+  const value = { user, family, allFamilies, familyMember, isAdmin, loading: overallLoading, clubSettings, settingsLoading, locations, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, sendPasswordReset, updateFamilyData, createFamily, updateClubSettings, deleteFamily, addLocation, updateLocation, deleteLocation, moveLocation, addUserToFamily };
 
   return (
     <AuthContext.Provider value={value}>

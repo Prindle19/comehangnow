@@ -9,6 +9,7 @@ import { Button } from "./ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { Skeleton } from "./ui/skeleton";
 
 const navLinks = [
   { href: "/", label: "Dashboard", icon: Home },
@@ -18,7 +19,7 @@ const navLinks = [
 
 export function Header() {
   const pathname = usePathname();
-  const { user, signOut, familyMember, clubSettings } = useAuth();
+  const { user, signOut, familyMember, clubSettings, settingsLoading } = useAuth();
   
   const userAvatarUrl = familyMember?.avatarUrl || user?.photoURL;
   const userAvatarSrc = userAvatarUrl && !userAvatarUrl.includes('placehold.co') ? userAvatarUrl : undefined;
@@ -29,13 +30,22 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
-            <Avatar className="h-8 w-8">
-                <AvatarImage src={clubSettings.logoUrl} alt={clubSettings.name} />
-                <AvatarFallback>
-                    <Package2 className="h-5 w-5" />
-                </AvatarFallback>
-            </Avatar>
-            <span className="font-bold text-lg font-headline">{clubSettings.name}</span>
+            {settingsLoading ? (
+                <>
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <Skeleton className="h-6 w-32" />
+                </>
+            ) : (
+                <>
+                    <Avatar className="h-8 w-8">
+                        <AvatarImage src={clubSettings.logoUrl} alt={clubSettings.name} />
+                        <AvatarFallback>
+                            <Package2 className="h-5 w-5" />
+                        </AvatarFallback>
+                    </Avatar>
+                    <span className="font-bold text-lg font-headline">{clubSettings.name}</span>
+                </>
+            )}
           </Link>
           {user && (
             <nav className="hidden items-center gap-4 text-sm md:flex">
