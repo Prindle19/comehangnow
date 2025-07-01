@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, LogIn, Trash2, Package2, PlusCircle, Pencil, ArrowDown, ArrowUp } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useClubSettings } from "@/hooks/use-club-settings";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { admins } from "@/lib/data";
@@ -35,7 +36,8 @@ type ClubSettingsFormValues = z.infer<typeof ClubSettingsSchema>;
 
 
 export default function SettingsPage() {
-  const { user, family, allFamilies, isAdmin, clubSettings, updateClubSettings, deleteFamily, loading, locations, addLocation, updateLocation, deleteLocation, moveLocation } = useAuth();
+  const { user, family, allFamilies, isAdmin, updateClubSettings, deleteFamily, loading: authLoading, addLocation, updateLocation, deleteLocation, moveLocation } = useAuth();
+  const { clubSettings, settingsLoading, locations, locationsLoading } = useClubSettings();
   const { toast } = useToast();
   const [familyToDelete, setFamilyToDelete] = React.useState<Family | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -43,6 +45,8 @@ export default function SettingsPage() {
   const [isLocationDialogOpen, setLocationDialogOpen] = React.useState(false);
   const [locationToEdit, setLocationToEdit] = React.useState<ClubLocation | null>(null);
   const [locationToDelete, setLocationToDelete] = React.useState<ClubLocation | null>(null);
+
+  const loading = authLoading || settingsLoading || locationsLoading;
 
   const form = useForm<ClubSettingsFormValues>({
     resolver: zodResolver(ClubSettingsSchema),

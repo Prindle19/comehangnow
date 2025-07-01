@@ -3,11 +3,12 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, sendPasswordResetEmail, UserCredential } from 'firebase/auth';
-import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc, writeBatch, query, orderBy, getDocs, getDoc, arrayUnion } from "firebase/firestore";
+import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc, writeBatch, query, getDocs, getDoc, arrayUnion } from "firebase/firestore";
 import { auth, db } from '@/lib/firebase';
 import { admins } from '@/lib/data';
 import type { Family, FamilyMember, ClubLocation, ClubSettings, OperatingHours } from '@/lib/types';
 import { useToast } from './use-toast';
+import { useClubSettings } from './use-club-settings';
 
 interface AuthContextType {
   user: User | null;
@@ -16,9 +17,6 @@ interface AuthContextType {
   familyMember: FamilyMember | null;
   isAdmin: boolean;
   loading: boolean;
-  settingsLoading: boolean;
-  clubSettings: ClubSettings;
-  locations: ClubLocation[];
   signInWithGoogle: () => Promise<UserCredential>;
   signInWithEmail: (email: string, password: string) => Promise<UserCredential>;
   signUpWithEmail: (name: string, email: string, password: string) => Promise<UserCredential>;
@@ -56,64 +54,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [authLoading, setAuthLoading] = useState<boolean>(true);
   const [familiesLoading, setFamiliesLoading] = useState<boolean>(true);
-  const [clubSettings, setClubSettings] = useState<ClubSettings>({ name: "Come Hang Now", logoUrl: "" });
-  const [settingsLoading, setSettingsLoading] = useState<boolean>(true);
-  const [locations, setLocations] = useState<ClubLocation[]>([]);
-  const [locationsLoading, setLocationsLoading] = useState<boolean>(true);
   const { toast } = useToast();
-
-  useEffect(() => {
-    if (clubSettings.name && !settingsLoading) {
-      document.title = clubSettings.name;
-    }
-  }, [clubSettings.name, settingsLoading]);
-
-  // Fetch settings (public)
-  useEffect(() => {
-    if (!db) {
-      setSettingsLoading(false);
-      return;
-    }
-    const settingsDocRef = doc(db, "clubSettings", "main");
-    const unsubscribeSettings = onSnapshot(settingsDocRef, (docSnap) => {
-        if (docSnap.exists()) {
-            setClubSettings(docSnap.data() as ClubSettings);
-        } else {
-            const defaultSettings = { name: "Come Hang Now", logoUrl: "" };
-            setClubSettings(defaultSettings);
-        }
-        setSettingsLoading(false);
-    }, (error) => {
-        console.error("Error fetching club settings:", error);
-        setSettingsLoading(false);
-    });
-
-    return () => unsubscribeSettings();
-  }, [db]);
-  
-  // Fetch locations (public)
-  useEffect(() => {
-    if (!db) {
-      setLocationsLoading(false);
-      return;
-    }
-    setLocationsLoading(true);
-    const locationsQuery = query(collection(db, "locations"), orderBy("order"));
-    const unsubscribeLocations = onSnapshot(locationsQuery, async (snapshot) => {
-        if (snapshot.empty && isAdmin) {
-            await seedInitialLocations();
-        } else {
-            const locationsData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as ClubLocation));
-            setLocations(locationsData);
-        }
-        setLocationsLoading(false);
-    }, (error) => {
-        console.error("Error fetching locations:", error);
-        setLocationsLoading(false);
-    });
-    
-    return () => unsubscribeLocations();
-  }, [db, isAdmin]);
+  const { locations, locationsLoading } = useClubSettings();
 
   // Auth state listener
   useEffect(() => {
@@ -294,6 +236,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await batch.commit();
   };
 
+  useEffect(() => {
+    if (db && isAdmin && !locationsLoading && locations.length === 0) {
+      seedInitialLocations();
+    }
+  }, [db, isAdmin, locations, locationsLoading]);
+
   const addLocation = async (locationData: Omit<ClubLocation, 'id' | 'order'>) => {
     if (!db || !isAdmin) return;
     try {
@@ -389,9 +337,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { success: true };
   };
 
-  const overallLoading = authLoading || settingsLoading || locationsLoading || (user && familiesLoading);
+  const loading = authLoading || (!!user && familiesLoading);
 
-  const value = { user, family, allFamilies, familyMember, isAdmin, loading: overallLoading, clubSettings, settingsLoading, locations, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, sendPasswordReset, updateFamilyData, createFamily, updateClubSettings, deleteFamily, addLocation, updateLocation, deleteLocation, moveLocation, addUserToFamily };
+  const value = { user, family, allFamilies, familyMember, isAdmin, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, sendPasswordReset, updateFamilyData, createFamily, updateClubSettings, deleteFamily, addLocation, updateLocation, deleteLocation, moveLocation, addUserToFamily };
 
   return (
     <AuthContext.Provider value={value}>

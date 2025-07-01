@@ -7,6 +7,7 @@ import { Package2, Home, Users, Settings, LogOut, User } from "lucide-react";
 import { cn, getFirstName } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { useClubSettings } from "@/hooks/use-club-settings";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Skeleton } from "./ui/skeleton";
@@ -19,7 +20,8 @@ const navLinks = [
 
 export function Header() {
   const pathname = usePathname();
-  const { user, signOut, familyMember, clubSettings, settingsLoading } = useAuth();
+  const { user, signOut, familyMember } = useAuth();
+  const { clubSettings, settingsLoading } = useClubSettings();
   
   const userAvatarUrl = familyMember?.avatarUrl || user?.photoURL;
   const userAvatarSrc = userAvatarUrl && !userAvatarUrl.includes('placehold.co') ? userAvatarUrl : undefined;

@@ -8,6 +8,7 @@ import { CheckInDialog } from "@/components/check-in-dialog";
 import LocationSection from "@/components/dashboard/location-section";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { useClubSettings } from "@/hooks/use-club-settings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogIn } from "lucide-react";
 import { collection, addDoc, deleteDoc, onSnapshot, Timestamp, doc, query, where, getDocs, updateDoc } from "firebase/firestore";
@@ -16,11 +17,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { isLocationOpen } from "@/lib/utils";
 
 export default function Home() {
-  const { user, family, allFamilies, clubSettings, loading, locations } = useAuth();
+  const { user, family, allFamilies, loading: authLoading } = useAuth();
+  const { clubSettings, settingsLoading, locations, locationsLoading } = useClubSettings();
   const [allCheckIns, setAllCheckIns] = React.useState<CheckIn[]>([]);
   const [activeCheckIns, setActiveCheckIns] = React.useState<CheckIn[]>([]);
   const [isCheckInDialogOpen, setCheckInDialogOpen] = React.useState(false);
   const [familyCheckIn, setFamilyCheckIn] = React.useState<CheckIn | null>(null);
+
+  const loading = authLoading || settingsLoading || locationsLoading;
 
   React.useEffect(() => {
     if (!user || !db) {
