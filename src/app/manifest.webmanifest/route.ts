@@ -26,36 +26,37 @@ export async function GET() {
   const defaultLogo512 = "https://placehold.co/512x512.png";
   
   let icons;
-  if (clubSettings.logoUrl && clubSettings.logoUrl.startsWith('data:image')) {
-    const mimeTypeMatch = clubSettings.logoUrl.match(/data:(image\/.*?);/);
+  if (clubSettings.logoUrl) {
+    const isDataUri = clubSettings.logoUrl.startsWith('data:image');
+    const mimeTypeMatch = isDataUri ? clubSettings.logoUrl.match(/data:(image\/.*?);/) : null;
     const type = mimeTypeMatch ? mimeTypeMatch[1] : 'image/png';
     icons = [
       {
         src: clubSettings.logoUrl,
         sizes: '192x192',
         type: type,
-        purpose: 'any maskable'
+        purpose: 'any'
       },
       {
         src: clubSettings.logoUrl,
         sizes: '512x512',
         type: type,
-        purpose: 'any maskable'
+        purpose: 'any'
       },
     ];
   } else {
     icons = [
       {
-        src: clubSettings.logoUrl || defaultLogo192,
+        src: defaultLogo192,
         sizes: '192x192',
         type: 'image/png',
-        purpose: 'any maskable'
+        purpose: 'any'
       },
       {
-        src: clubSettings.logoUrl || defaultLogo512,
+        src: defaultLogo512,
         sizes: '512x512',
         type: 'image/png',
-        purpose: 'any maskable'
+        purpose: 'any'
       },
     ];
   }
