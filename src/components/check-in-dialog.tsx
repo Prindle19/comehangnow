@@ -104,7 +104,7 @@ export function CheckInDialog({ isOpen, onOpenChange, family, locations, onCheck
                     <FormLabel className="text-base">Who's hanging?</FormLabel>
                     <FormDescription>Select all family members hanging.</FormDescription>
                   </div>
-                  {family.members.filter(m => m.status === 'active').map((member) => (
+                  {family.members.map((member) => (
                     <FormField
                       key={member.id}
                       control={form.control}
