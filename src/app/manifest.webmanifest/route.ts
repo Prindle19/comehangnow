@@ -4,6 +4,8 @@ import { getDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ClubSettings } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   let clubSettings: Partial<ClubSettings> = {
     name: "ClubConnect",
@@ -35,13 +37,13 @@ export async function GET() {
         src: clubSettings.logoUrl,
         sizes: '192x192',
         type: type,
-        purpose: 'any'
+        purpose: 'any maskable'
       },
       {
         src: clubSettings.logoUrl,
         sizes: '512x512',
         type: type,
-        purpose: 'any'
+        purpose: 'any maskable'
       },
     ];
   } else {
@@ -50,13 +52,13 @@ export async function GET() {
         src: defaultLogo192,
         sizes: '192x192',
         type: 'image/png',
-        purpose: 'any'
+        purpose: 'any maskable'
       },
       {
         src: defaultLogo512,
         sizes: '512x512',
         type: 'image/png',
-        purpose: 'any'
+        purpose: 'any maskable'
       },
     ];
   }
