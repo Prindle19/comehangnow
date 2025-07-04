@@ -6,11 +6,34 @@ import { Header } from '@/components/header';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/hooks/use-auth';
 import { ClubSettingsProvider } from '@/hooks/use-club-settings';
+import { getDoc, doc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { ClubSettings } from '@/lib/types';
 
-export const metadata: Metadata = {
-  title: 'ClubConnect',
-  description: "Know who's at the club and where.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  let clubSettings: Partial<ClubSettings> = {
+    name: "ClubConnect",
+  };
+
+  try {
+    if (db) {
+      const settingsDocRef = doc(db, "clubSettings", "main");
+      const docSnap = await getDoc(settingsDocRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        clubSettings.name = data.name || "ClubConnect";
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching club settings for metadata, using defaults.", error);
+  }
+
+  return {
+    title: clubSettings.name,
+    description: `Know who's at ${clubSettings.name || 'the club'} and where.`,
+  };
+}
+
 
 export default function RootLayout({
   children,

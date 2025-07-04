@@ -25,7 +25,7 @@ export async function GET() {
       }
     }
   } catch (error) {
-    console.error("Error fetching club settings for manifest. Using default values.", error);
+    console.error("Error fetching club settings for manifest. This is likely due to Firestore security rules. Using default values.", error);
   }
 
   const defaultLogo192 = "https://placehold.co/192x192.png";
