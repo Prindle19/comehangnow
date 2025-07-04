@@ -1,7 +1,46 @@
 
-// A fetch handler is required for a PWA to be installable.
-self.addEventListener('fetch', (event) => {
-  // This is a network-first strategy.
-  // You can implement more sophisticated caching strategies here.
-  event.respondWith(fetch(event.request));
+const CACHE_NAME = 'come-hang-now-cache-v1';
+const urlsToCache = [
+  '/',
+];
+
+// Install the service worker and cache key assets
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('Opened cache');
+        return cache.addAll(urlsToCache);
+      })
+  );
+});
+
+// Serve cached content when offline
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => {
+        // Cache hit - return response
+        if (response) {
+          return response;
+        }
+        return fetch(event.request);
+      })
+  );
+});
+
+// Clean up old caches
+self.addEventListener('activate', event => {
+  const cacheWhitelist = [CACHE_NAME];
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
 });

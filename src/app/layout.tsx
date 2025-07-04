@@ -28,9 +28,14 @@ export async function generateMetadata(): Promise<Metadata> {
     console.error("Error fetching club settings for metadata, using defaults.", error);
   }
 
+  const appName = clubSettings.name || "ClubConnect";
+
   return {
-    title: clubSettings.name,
-    description: `Know who's at ${clubSettings.name || 'the club'} and where.`,
+    title: {
+      default: appName,
+      template: `%s | ${appName}`,
+    },
+    description: `Know who's at ${appName} and where.`,
   };
 }
 

@@ -28,6 +28,7 @@ export async function GET() {
     console.error("Error fetching club settings for manifest. This is likely due to Firestore security rules. Using default values.", error);
   }
 
+  const appName = clubSettings.name || "ClubConnect";
   const defaultLogo192 = "https://placehold.co/192x192.png";
   const defaultLogo512 = "https://placehold.co/512x512.png";
   
@@ -68,12 +69,12 @@ export async function GET() {
   }
 
   const manifest = {
-    name: clubSettings.name || "ClubConnect",
-    short_name: clubSettings.name || "ClubConnect",
-    description: `Check-in and see who's at ${clubSettings.name || "the club"}.`,
+    name: appName,
+    short_name: appName,
+    description: `Check-in and see who's at ${appName}.`,
     icons: icons,
     theme_color: '#87CEEB',
-    background_color: '#F0F0F0',
+    background_color: '#FFFFFF',
     start_url: '/',
     display: 'standalone',
     scope: '/',
