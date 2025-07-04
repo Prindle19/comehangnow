@@ -9,7 +9,8 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   const defaultSettings = {
     name: "Come Hang Now",
-    logoUrl: "https://placehold.co/512x512.png",
+    logoUrl192: "https://placehold.co/192x192/87ceeb/ffffff.png?text=Hang",
+    logoUrl512: "https://placehold.co/512x512/87ceeb/ffffff.png?text=Hang",
   };
   let clubSettings: Partial<ClubSettings> = {};
 
@@ -26,29 +27,36 @@ export async function GET() {
       }
     }
   } catch (error) {
-    // This can happen if firestore rules are not public. We'll use defaults.
     console.warn("Could not fetch club settings for manifest, using defaults. This may be due to Firestore security rules.");
   }
 
   const appName = clubSettings.name || defaultSettings.name;
-  const logoUrl = clubSettings.logoUrl || defaultSettings.logoUrl;
-  
-  // The logo can be a data URI or a standard URL. We need to determine the mime type.
-  const isDataUri = logoUrl.startsWith('data:image');
-  const mimeTypeMatch = isDataUri ? logoUrl.match(/data:(image\/.*?);/) : null;
-  const type = mimeTypeMatch ? mimeTypeMatch[1] : 'image/png'; // Default to png if it's a URL.
+  const customLogoUrl = clubSettings.logoUrl;
 
-  const icons = [
+  const icons = customLogoUrl ? [
     {
-      src: logoUrl,
+      src: customLogoUrl,
       sizes: '192x192',
-      type: type,
+      type: customLogoUrl.startsWith('data:image/svg+xml') ? 'image/svg+xml' : (customLogoUrl.match(/data:(image\/.*?);/)?.[1] || 'image/png'),
       purpose: 'any maskable'
     },
     {
-      src: logoUrl,
+      src: customLogoUrl,
       sizes: '512x512',
-      type: type,
+      type: customLogoUrl.startsWith('data:image/svg+xml') ? 'image/svg+xml' : (customLogoUrl.match(/data:(image\/.*?);/)?.[1] || 'image/png'),
+      purpose: 'any maskable'
+    },
+  ] : [
+    {
+      src: defaultSettings.logoUrl192,
+      sizes: '192x192',
+      type: 'image/png',
+      purpose: 'any maskable'
+    },
+    {
+      src: defaultSettings.logoUrl512,
+      sizes: '512x512',
+      type: 'image/png',
       purpose: 'any maskable'
     },
   ];
