@@ -2,15 +2,12 @@
 import { NextResponse } from 'next/server';
 import { getDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { ClubSettings } from '@/lib/types';
+import type { ClubSettings } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  let clubSettings: Partial<ClubSettings> = {
-    name: "ClubConnect",
-    logoUrl: ""
-  };
+  let clubSettings: Partial<ClubSettings> = {};
 
   try {
     if (db) {
@@ -19,54 +16,42 @@ export async function GET() {
       if (docSnap.exists()) {
         const data = docSnap.data();
         clubSettings = {
-            name: data.name || "ClubConnect",
-            logoUrl: data.logoUrl || "",
+            name: data.name,
+            logoUrl: data.logoUrl,
         };
       }
     }
   } catch (error) {
-    console.error("Error fetching club settings for manifest. This is likely due to Firestore security rules. Using default values.", error);
+    console.error("Error fetching club settings for manifest. This is likely due to Firestore security rules.", error);
   }
 
-  const appName = clubSettings.name || "ClubConnect";
-  const defaultLogo192 = "https://placehold.co/192x192.png";
-  const defaultLogo512 = "https://placehold.co/512x512.png";
-  
-  let icons;
-  if (clubSettings.logoUrl && (clubSettings.logoUrl.startsWith('http') || clubSettings.logoUrl.startsWith('data:image'))) {
-    const isDataUri = clubSettings.logoUrl.startsWith('data:image');
-    const mimeTypeMatch = isDataUri ? clubSettings.logoUrl.match(/data:(image\/.*?);/) : null;
-    const type = mimeTypeMatch ? mimeTypeMatch[1] : 'image/png';
-    icons = [
-      {
-        src: clubSettings.logoUrl,
-        sizes: '192x192',
-        type: type,
-        purpose: 'any maskable'
-      },
-      {
-        src: clubSettings.logoUrl,
-        sizes: '512x512',
-        type: type,
-        purpose: 'any maskable'
-      },
-    ];
-  } else {
-    icons = [
-      {
-        src: defaultLogo192,
-        sizes: '192x192',
-        type: 'image/png',
-        purpose: 'any maskable'
-      },
-      {
-        src: defaultLogo512,
-        sizes: '512x512',
-        type: 'image/png',
-        purpose: 'any maskable'
-      },
-    ];
+  // Per user requirement, the PWA is only installable if the admin has set a logo and a custom name.
+  if (!clubSettings.name || !clubSettings.logoUrl) {
+    // Return a 404 Not Found response to prevent installation with default/missing values.
+    return new NextResponse(null, { status: 404 });
   }
+
+  const appName = clubSettings.name;
+  
+  // The logo can be a data URI or a standard URL. We need to determine the mime type.
+  const isDataUri = clubSettings.logoUrl.startsWith('data:image');
+  const mimeTypeMatch = isDataUri ? clubSettings.logoUrl.match(/data:(image\/.*?);/) : null;
+  const type = mimeTypeMatch ? mimeTypeMatch[1] : 'image/png'; // Default to png if it's a URL, as we can't be sure.
+
+  const icons = [
+    {
+      src: clubSettings.logoUrl,
+      sizes: '192x192',
+      type: type,
+      purpose: 'any maskable'
+    },
+    {
+      src: clubSettings.logoUrl,
+      sizes: '512x512',
+      type: type,
+      purpose: 'any maskable'
+    },
+  ];
 
   const manifest = {
     name: appName,
@@ -74,7 +59,7 @@ export async function GET() {
     description: `Check-in and see who's at ${appName}.`,
     icons: icons,
     theme_color: '#87CEEB',
-    background_color: '#FFFFFF',
+    background_color: '#F0F0F0',
     start_url: '/',
     display: 'standalone',
     scope: '/',
