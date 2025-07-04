@@ -12,7 +12,7 @@ import { ClubSettings } from '@/lib/types';
 
 export async function generateMetadata(): Promise<Metadata> {
   let clubSettings: Partial<ClubSettings> = {
-    name: "ClubConnect",
+    name: "Come Hang Now",
   };
 
   try {
@@ -21,14 +21,14 @@ export async function generateMetadata(): Promise<Metadata> {
       const docSnap = await getDoc(settingsDocRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
-        clubSettings.name = data.name || "ClubConnect";
+        clubSettings.name = data.name || "Come Hang Now";
       }
     }
   } catch (error) {
     console.error("Error fetching club settings for metadata, using defaults.", error);
   }
 
-  const appName = clubSettings.name || "ClubConnect";
+  const appName = clubSettings.name || "Come Hang Now";
 
   return {
     title: {

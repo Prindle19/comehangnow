@@ -7,6 +7,10 @@ import type { ClubSettings } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  const defaultSettings = {
+    name: "Come Hang Now",
+    logoUrl: "https://placehold.co/512x512.png",
+  };
   let clubSettings: Partial<ClubSettings> = {};
 
   try {
@@ -22,31 +26,27 @@ export async function GET() {
       }
     }
   } catch (error) {
-    console.error("Error fetching club settings for manifest. This is likely due to Firestore security rules.", error);
+    // This can happen if firestore rules are not public. We'll use defaults.
+    console.warn("Could not fetch club settings for manifest, using defaults. This may be due to Firestore security rules.");
   }
 
-  // Per user requirement, the PWA is only installable if the admin has set a logo and a custom name.
-  if (!clubSettings.name || !clubSettings.logoUrl) {
-    // Return a 404 Not Found response to prevent installation with default/missing values.
-    return new NextResponse(null, { status: 404 });
-  }
-
-  const appName = clubSettings.name;
+  const appName = clubSettings.name || defaultSettings.name;
+  const logoUrl = clubSettings.logoUrl || defaultSettings.logoUrl;
   
   // The logo can be a data URI or a standard URL. We need to determine the mime type.
-  const isDataUri = clubSettings.logoUrl.startsWith('data:image');
-  const mimeTypeMatch = isDataUri ? clubSettings.logoUrl.match(/data:(image\/.*?);/) : null;
-  const type = mimeTypeMatch ? mimeTypeMatch[1] : 'image/png'; // Default to png if it's a URL, as we can't be sure.
+  const isDataUri = logoUrl.startsWith('data:image');
+  const mimeTypeMatch = isDataUri ? logoUrl.match(/data:(image\/.*?);/) : null;
+  const type = mimeTypeMatch ? mimeTypeMatch[1] : 'image/png'; // Default to png if it's a URL.
 
   const icons = [
     {
-      src: clubSettings.logoUrl,
+      src: logoUrl,
       sizes: '192x192',
       type: type,
       purpose: 'any maskable'
     },
     {
-      src: clubSettings.logoUrl,
+      src: logoUrl,
       sizes: '512x512',
       type: type,
       purpose: 'any maskable'
