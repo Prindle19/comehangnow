@@ -17,18 +17,22 @@ export async function GET() {
       const settingsDocRef = doc(db, "clubSettings", "main");
       const docSnap = await getDoc(settingsDocRef);
       if (docSnap.exists()) {
-        clubSettings = docSnap.data();
+        const data = docSnap.data();
+        clubSettings = {
+            name: data.name || "ClubConnect",
+            logoUrl: data.logoUrl || "",
+        };
       }
     }
   } catch (error) {
-    console.error("Error fetching club settings for manifest:", error);
+    console.error("Error fetching club settings for manifest. Using default values.", error);
   }
 
   const defaultLogo192 = "https://placehold.co/192x192.png";
   const defaultLogo512 = "https://placehold.co/512x512.png";
   
   let icons;
-  if (clubSettings.logoUrl) {
+  if (clubSettings.logoUrl && (clubSettings.logoUrl.startsWith('http') || clubSettings.logoUrl.startsWith('data:image'))) {
     const isDataUri = clubSettings.logoUrl.startsWith('data:image');
     const mimeTypeMatch = isDataUri ? clubSettings.logoUrl.match(/data:(image\/.*?);/) : null;
     const type = mimeTypeMatch ? mimeTypeMatch[1] : 'image/png';

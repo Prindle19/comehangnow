@@ -35,17 +35,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const getDefaultOperatingHours = (): OperatingHours => ({
-    enabled: false,
-    monday: { enabled: false, slots: [] },
-    tuesday: { enabled: false, slots: [] },
-    wednesday: { enabled: false, slots: [] },
-    thursday: { enabled: false, slots: [] },
-    friday: { enabled: false, slots: [] },
-    saturday: { enabled: false, slots: [] },
-    sunday: { enabled: false, slots: [] },
-});
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [family, setFamily] = useState<Family | null>(null);
@@ -55,7 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [authLoading, setAuthLoading] = useState<boolean>(true);
   const [familiesLoading, setFamiliesLoading] = useState<boolean>(true);
   const { toast } = useToast();
-  const { locations, locationsLoading } = useClubSettings();
+  const { locations } = useClubSettings();
 
   // Auth state listener
   useEffect(() => {
@@ -219,28 +208,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         toast({ title: "Error deleting family", description: error.message, variant: "destructive" });
     }
   };
-
-  const seedInitialLocations = async () => {
-    if (!db) return;
-    const batch = writeBatch(db);
-    const locationsCollection = collection(db, "locations");
-    const defaultLocations = [
-        { name: "The Pool", icon: "Waves", order: 0, operatingHours: getDefaultOperatingHours() },
-        { name: "The Bluffs", icon: "Mountain", order: 1, operatingHours: getDefaultOperatingHours() },
-        { name: "The Upper Deck", icon: "Building2", order: 2, operatingHours: getDefaultOperatingHours() },
-    ];
-    defaultLocations.forEach(loc => {
-        const docRef = doc(locationsCollection);
-        batch.set(docRef, loc);
-    });
-    await batch.commit();
-  };
-
-  useEffect(() => {
-    if (db && isAdmin && !locationsLoading && locations.length === 0) {
-      seedInitialLocations();
-    }
-  }, [db, isAdmin, locations, locationsLoading]);
 
   const addLocation = async (locationData: Omit<ClubLocation, 'id' | 'order'>) => {
     if (!db || !isAdmin) return;
