@@ -7,6 +7,7 @@ export type FamilyMember = {
   avatarUrl: string;
   email: string;
   role: 'owner' | 'member';
+  notificationSubscriptions?: string[];
 };
 
 export type Family = {

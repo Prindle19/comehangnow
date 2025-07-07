@@ -31,6 +31,7 @@ interface AuthContextType {
   deleteLocation: (locationId: string) => Promise<void>;
   moveLocation: (currentIndex: number, direction: 'up' | 'down') => Promise<void>;
   addUserToFamily: (user: User, familyId: string) => Promise<{ success: boolean; message?: string } | undefined>;
+  updateNotificationPreferences: (familyIdToToggle: string, subscribe: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -304,9 +305,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { success: true };
   };
 
+  const updateNotificationPreferences = (familyIdToToggle: string, subscribe: boolean) => {
+    if (!family || !familyMember) return;
+
+    const currentSubscriptions = familyMember.notificationSubscriptions || [];
+    let updatedSubscriptions: string[];
+
+    if (subscribe) {
+        if (!currentSubscriptions.includes(familyIdToToggle)) {
+            updatedSubscriptions = [...currentSubscriptions, familyIdToToggle];
+        } else {
+            updatedSubscriptions = currentSubscriptions;
+        }
+    } else {
+        updatedSubscriptions = currentSubscriptions.filter(id => id !== familyIdToToggle);
+    }
+    
+    const updatedMembers = family.members.map(member => {
+        if (member.id === familyMember.id) {
+            return { ...member, notificationSubscriptions: updatedSubscriptions };
+        }
+        return member;
+    });
+
+    const updatedFamily = { ...family, members: updatedMembers };
+    
+    updateFamilyData(updatedFamily);
+  };
+
   const loading = authLoading || (!!user && familiesLoading);
 
-  const value = { user, family, allFamilies, familyMember, isAdmin, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, sendPasswordReset, updateFamilyData, createFamily, updateClubSettings, deleteFamily, addLocation, updateLocation, deleteLocation, moveLocation, addUserToFamily };
+  const value = { user, family, allFamilies, familyMember, isAdmin, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, sendPasswordReset, updateFamilyData, createFamily, updateClubSettings, deleteFamily, addLocation, updateLocation, deleteLocation, moveLocation, addUserToFamily, updateNotificationPreferences };
 
   return (
     <AuthContext.Provider value={value}>

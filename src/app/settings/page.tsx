@@ -36,7 +36,7 @@ type ClubSettingsFormValues = z.infer<typeof ClubSettingsSchema>;
 
 
 export default function SettingsPage() {
-  const { user, family, allFamilies, isAdmin, updateClubSettings, deleteFamily, loading: authLoading, addLocation, updateLocation, deleteLocation, moveLocation } = useAuth();
+  const { user, family, allFamilies, isAdmin, updateClubSettings, deleteFamily, loading: authLoading, addLocation, updateLocation, deleteLocation, moveLocation, familyMember, updateNotificationPreferences } = useAuth();
   const { clubSettings, settingsLoading, locations, locationsLoading } = useClubSettings();
   const { toast } = useToast();
   const [familyToDelete, setFamilyToDelete] = React.useState<Family | null>(null);
@@ -182,20 +182,31 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {allFamilies.filter(f => f.id !== family?.id).map((fam) => (
-                <div key={fam.id} className="flex items-center justify-between p-4 rounded-lg border">
-                    <div className="flex items-center space-x-4">
-                        <Avatar data-ai-hint="family logo">
-                            <AvatarImage src={undefined} />
-                            <AvatarFallback>{getInitials(fam.name)}</AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium">{fam.name}</span>
+              {allFamilies.filter(f => f.id !== family?.id).map((fam) => {
+                const isSubscribed = familyMember?.notificationSubscriptions?.includes(fam.id) || false;
+                return (
+                    <div key={fam.id} className="flex items-center justify-between p-4 rounded-lg border">
+                        <div className="flex items-center space-x-4">
+                            <Avatar data-ai-hint="family logo">
+                                <AvatarImage src={undefined} />
+                                <AvatarFallback>{getInitials(fam.name)}</AvatarFallback>
+                            </Avatar>
+                            <span className="font-medium">{fam.name}</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <Switch
+                                id={`notifications-${fam.id}`}
+                                checked={isSubscribed}
+                                onCheckedChange={(checked) => {
+                                    if (familyMember) {
+                                        updateNotificationPreferences(fam.id, checked);
+                                    }
+                                }}
+                            />
+                        </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <Switch id={`notifications-${fam.id}`} defaultChecked={Math.random() > 0.5} />
-                    </div>
-                </div>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
         </TabsContent>
