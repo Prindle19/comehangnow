@@ -15,6 +15,7 @@ import { collection, addDoc, deleteDoc, onSnapshot, Timestamp, doc, query, where
 import { db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isLocationOpen } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
   const { user, family, allFamilies, loading: authLoading } = useAuth();
@@ -23,6 +24,7 @@ export default function Home() {
   const [activeCheckIns, setActiveCheckIns] = React.useState<CheckIn[]>([]);
   const [isCheckInDialogOpen, setCheckInDialogOpen] = React.useState(false);
   const [familyCheckIn, setFamilyCheckIn] = React.useState<CheckIn | null>(null);
+  const { toast } = useToast();
 
   const loading = authLoading || settingsLoading || locationsLoading;
 
@@ -43,10 +45,17 @@ export default function Home() {
         } as CheckIn;
       });
       setAllCheckIns(checkinsData);
+    }, (error) => {
+        console.error("Error fetching check-ins:", error);
+        toast({
+            title: "Error fetching data",
+            description: "Could not load check-in information. Please check your connection and permissions.",
+            variant: "destructive",
+        });
     });
 
     return () => unsubscribe();
-  }, [user, db]);
+  }, [user, db, toast]);
   
   React.useEffect(() => {
     const processCheckIns = () => {
@@ -116,28 +125,46 @@ export default function Home() {
       checkOutTime: Timestamp.fromDate(checkOutTime),
     };
 
-    const checkinsRef = collection(db, "checkins");
-    const q = query(checkinsRef, where("familyId", "==", familyId));
-    const querySnapshot = await getDocs(q);
+    try {
+        const checkinsRef = collection(db, "checkins");
+        const q = query(checkinsRef, where("familyId", "==", familyId));
+        const querySnapshot = await getDocs(q);
 
-    if (querySnapshot.empty) {
-      await addDoc(collection(db, "checkins"), newCheckInData);
-    } else {
-      const docId = querySnapshot.docs[0].id;
-      await updateDoc(doc(db, "checkins", docId), newCheckInData);
+        if (querySnapshot.empty) {
+        await addDoc(collection(db, "checkins"), newCheckInData);
+        } else {
+        const docId = querySnapshot.docs[0].id;
+        await updateDoc(doc(db, "checkins", docId), newCheckInData);
+        }
+    } catch (error: any) {
+        console.error("Error during check-in:", error);
+        toast({
+            variant: "destructive",
+            title: "Check-in failed",
+            description: error.message || "An unexpected error occurred.",
+        });
     }
   };
   
   const handleLeave = async (familyId: string) => {
     if (!db || !familyId) return;
     
-    const checkinsRef = collection(db, "checkins");
-    const q = query(checkinsRef, where("familyId", "==", familyId));
-    const querySnapshot = await getDocs(q);
+    try {
+        const checkinsRef = collection(db, "checkins");
+        const q = query(checkinsRef, where("familyId", "==", familyId));
+        const querySnapshot = await getDocs(q);
 
-    if (!querySnapshot.empty) {
-        const docId = querySnapshot.docs[0].id;
-        await deleteDoc(doc(db, "checkins", docId));
+        if (!querySnapshot.empty) {
+            const docId = querySnapshot.docs[0].id;
+            await deleteDoc(doc(db, "checkins", docId));
+        }
+    } catch (error: any) {
+        console.error("Error during leave:", error);
+        toast({
+            variant: "destructive",
+            title: "Leave failed",
+            description: error.message || "An unexpected error occurred.",
+        });
     }
   };
   
