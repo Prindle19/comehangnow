@@ -92,4 +92,6 @@ export const onCheckInCreated = onDocumentCreated("checkins/{checkinId}", async 
         }
 
     } catch (error) {
-        console.error("Error sending check-i
+        console.error("Error sending check-in notification:", error);
+    }
+  });
