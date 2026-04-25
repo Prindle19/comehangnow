@@ -181,7 +181,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         members: [newFamilyMember]
     };
     
-    await addDoc(collection(db, "families"), newFamily);
+    try {
+        await addDoc(collection(db, "families"), newFamily);
+        toast({ title: "Family created!" });
+    } catch (e: any) {
+        console.error("Failed to create family", e);
+        toast({ title: "Failed to create family", description: e.message, variant: "destructive" });
+    }
   };
   
   const updateClubSettings = async (newSettings: Partial<ClubSettings>) => {
