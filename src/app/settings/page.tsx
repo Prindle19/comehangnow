@@ -17,7 +17,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useClubSettings } from "@/hooks/use-club-settings";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { admins } from "@/lib/data";
+
 import { cn, getInitials } from "@/lib/utils";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
@@ -36,8 +36,8 @@ type ClubSettingsFormValues = z.infer<typeof ClubSettingsSchema>;
 
 
 export default function SettingsPage() {
-  const { user, family, allFamilies, isAdmin, updateClubSettings, deleteFamily, loading: authLoading, addLocation, updateLocation, deleteLocation, moveLocation, familyMember, updateNotificationPreferences } = useAuth();
-  const { clubSettings, settingsLoading, locations, locationsLoading } = useClubSettings();
+  const { user, family, allFamilies, updateClubSettings, deleteFamily, loading: authLoading, addLocation, updateLocation, deleteLocation, moveLocation, familyMember, updateNotificationPreferences } = useAuth();
+  const { isAdmin, clubSettings, settingsLoading, locations, locationsLoading } = useClubSettings();
   const { toast } = useToast();
   const [familyToDelete, setFamilyToDelete] = React.useState<Family | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -251,10 +251,10 @@ export default function SettingsPage() {
                             <div className="space-y-4">
                                 <Label>Admin Users</Label>
                                 <CardDescription>
-                                    Admins can manage community settings. This list is managed in the file <code>src/lib/data.ts</code>.
+                                    Admins can manage community settings. This list is configured for your specific club domain.
                                 </CardDescription>
                                 <ul className="list-disc pl-5 text-sm text-muted-foreground">
-                                    {admins.map(email => <li key={email}>{email}</li>)}
+                                    {clubSettings.admins?.map(email => <li key={email}>{email}</li>) || <li>No admins configured.</li>}
                                 </ul>
                             </div>
                             <Button type="submit" disabled={!form.formState.isDirty} className="bg-accent hover:bg-accent/90 text-accent-foreground">Save Changes</Button>

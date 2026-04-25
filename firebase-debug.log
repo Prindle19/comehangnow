@@ -1,0 +1,252 @@
+[debug] [2026-04-25T19:29:01.905Z] ----------------------------------------------------------------------
+[debug] [2026-04-25T19:29:01.908Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Sean\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\firebase-tools\lib\bin\firebase.js deploy --only functions
+[debug] [2026-04-25T19:29:01.908Z] CLI Version:   15.15.0
+[debug] [2026-04-25T19:29:01.909Z] Platform:      win32
+[debug] [2026-04-25T19:29:01.909Z] Node Version:  v20.12.0
+[debug] [2026-04-25T19:29:01.909Z] Time:          Sat Apr 25 2026 15:29:01 GMT-0400 (Eastern Daylight Time)
+[debug] [2026-04-25T19:29:01.909Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-04-25T19:29:04.118Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-04-25T19:29:04.119Z] > authorizing via signed-in user (wohltman@gmail.com)
+[debug] [2026-04-25T19:29:04.119Z] [iam] checking project clubconnect-ubeew for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2026-04-25T19:29:04.120Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:04.120Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:04.121Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/clubconnect-ubeew:testIamPermissions [none]
+[debug] [2026-04-25T19:29:04.121Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/clubconnect-ubeew:testIamPermissions  x-goog-user-project=clubconnect-ubeew
+[debug] [2026-04-25T19:29:04.121Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/clubconnect-ubeew:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2026-04-25T19:29:04.345Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/clubconnect-ubeew:testIamPermissions 200
+[debug] [2026-04-25T19:29:04.346Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/clubconnect-ubeew:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2026-04-25T19:29:04.346Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:04.346Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:04.346Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/clubconnect-ubeew/serviceAccounts/clubconnect-ubeew@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2026-04-25T19:29:04.346Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/clubconnect-ubeew/serviceAccounts/clubconnect-ubeew@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2026-04-25T19:29:04.575Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/clubconnect-ubeew/serviceAccounts/clubconnect-ubeew@appspot.gserviceaccount.com:testIamPermissions 404
+[debug] [2026-04-25T19:29:04.575Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/clubconnect-ubeew/serviceAccounts/clubconnect-ubeew@appspot.gserviceaccount.com:testIamPermissions {"error":{"code":404,"message":"Unknown service account","status":"NOT_FOUND"}}
+[debug] [2026-04-25T19:29:04.575Z] [functions] service account IAM check errored, deploy may fail: Request to https://iam.googleapis.com/v1/projects/clubconnect-ubeew/serviceAccounts/clubconnect-ubeew@appspot.gserviceaccount.com:testIamPermissions had HTTP Error: 404, Unknown service account {"name":"FirebaseError","children":[],"context":{"body":{"error":{"code":404,"message":"Unknown service account","status":"NOT_FOUND"}},"response":{"statusCode":404}},"exit":1,"message":"Request to https://iam.googleapis.com/v1/projects/clubconnect-ubeew/serviceAccounts/clubconnect-ubeew@appspot.gserviceaccount.com:testIamPermissions had HTTP Error: 404, Unknown service account","status":404}
+[info] 
+[info] === Deploying to 'clubconnect-ubeew'...
+[info] 
+[info] i  deploying functions 
+[info] Running command: npm --prefix "$RESOURCE_DIR" run build
+[info] +  functions: Finished running predeploy script. 
+[debug] [2026-04-25T19:29:14.360Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:14.360Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:14.360Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/clubconnect-ubeew [none]
+[debug] [2026-04-25T19:29:14.609Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/clubconnect-ubeew 200
+[debug] [2026-04-25T19:29:14.610Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/clubconnect-ubeew {"projectNumber":"142083257500","projectId":"clubconnect-ubeew","lifecycleState":"ACTIVE","name":"Come Hang Now","labels":{"monospace-workspace-id":"studio-4585403974","firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-06-22T20:29:26.141595Z"}
+[info] i  functions: preparing codebase default for deployment 
+[info] i  functions: ensuring required API cloudfunctions.googleapis.com is enabled... 
+[debug] [2026-04-25T19:29:14.612Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:14.612Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:14.612Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:14.612Z] Checked if tokens are valid: true, expires at: 1777148906465
+[info] i  functions: ensuring required API cloudbuild.googleapis.com is enabled... 
+[debug] [2026-04-25T19:29:14.613Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:14.613Z] Checked if tokens are valid: true, expires at: 1777148906465
+[info] i  artifactregistry: ensuring required API artifactregistry.googleapis.com is enabled... 
+[debug] [2026-04-25T19:29:14.614Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:14.614Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:14.614Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/clubconnect-ubeew/services/cloudfunctions.googleapis.com [none]
+[debug] [2026-04-25T19:29:14.614Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/clubconnect-ubeew/services/cloudfunctions.googleapis.com  x-goog-user-project=clubconnect-ubeew
+[debug] [2026-04-25T19:29:14.616Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/clubconnect-ubeew/services/runtimeconfig.googleapis.com [none]
+[debug] [2026-04-25T19:29:14.616Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/clubconnect-ubeew/services/runtimeconfig.googleapis.com  x-goog-user-project=clubconnect-ubeew
+[debug] [2026-04-25T19:29:14.617Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/clubconnect-ubeew/services/cloudbuild.googleapis.com [none]
+[debug] [2026-04-25T19:29:14.618Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/clubconnect-ubeew/services/cloudbuild.googleapis.com  x-goog-user-project=clubconnect-ubeew
+[debug] [2026-04-25T19:29:14.618Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/clubconnect-ubeew/services/artifactregistry.googleapis.com [none]
+[debug] [2026-04-25T19:29:14.619Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/clubconnect-ubeew/services/artifactregistry.googleapis.com  x-goog-user-project=clubconnect-ubeew
+[debug] [2026-04-25T19:29:14.940Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/clubconnect-ubeew/services/cloudbuild.googleapis.com 200
+[debug] [2026-04-25T19:29:14.940Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/clubconnect-ubeew/services/cloudbuild.googleapis.com [omitted]
+[info] +  functions: required API cloudbuild.googleapis.com is enabled 
+[debug] [2026-04-25T19:29:14.947Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/clubconnect-ubeew/services/runtimeconfig.googleapis.com 200
+[debug] [2026-04-25T19:29:14.947Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/clubconnect-ubeew/services/runtimeconfig.googleapis.com [omitted]
+[debug] [2026-04-25T19:29:14.954Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/clubconnect-ubeew/services/cloudfunctions.googleapis.com 200
+[debug] [2026-04-25T19:29:14.955Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/clubconnect-ubeew/services/cloudfunctions.googleapis.com [omitted]
+[warn] !  functions: missing required API cloudfunctions.googleapis.com. Enabling now... 
+[debug] [2026-04-25T19:29:14.955Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:14.955Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:14.955Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/clubconnect-ubeew/services/cloudfunctions.googleapis.com:enable [none]
+[debug] [2026-04-25T19:29:14.956Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/clubconnect-ubeew/services/cloudfunctions.googleapis.com:enable  x-goog-user-project=clubconnect-ubeew
+[debug] [2026-04-25T19:29:14.964Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/clubconnect-ubeew/services/artifactregistry.googleapis.com 200
+[debug] [2026-04-25T19:29:14.964Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/clubconnect-ubeew/services/artifactregistry.googleapis.com [omitted]
+[info] +  artifactregistry: required API artifactregistry.googleapis.com is enabled 
+[debug] [2026-04-25T19:29:15.526Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/clubconnect-ubeew/services/cloudfunctions.googleapis.com:enable 200
+[debug] [2026-04-25T19:29:15.526Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/clubconnect-ubeew/services/cloudfunctions.googleapis.com:enable [omitted]
+[debug] [2026-04-25T19:29:25.536Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:25.536Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:25.537Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/clubconnect-ubeew/adminSdkConfig [none]
+[debug] [2026-04-25T19:29:25.749Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/clubconnect-ubeew/adminSdkConfig 200
+[debug] [2026-04-25T19:29:25.749Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/clubconnect-ubeew/adminSdkConfig {"projectId":"clubconnect-ubeew","storageBucket":"clubconnect-ubeew.firebasestorage.app"}
+[debug] [2026-04-25T19:29:25.750Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:25.750Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:25.750Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/clubconnect-ubeew/configs [none]
+[debug] [2026-04-25T19:29:25.901Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/clubconnect-ubeew/configs 200
+[debug] [2026-04-25T19:29:25.901Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/clubconnect-ubeew/configs {}
+[debug] [2026-04-25T19:29:25.903Z] Validating nodejs source
+[warn] !  functions: Runtime Node.js 20 will be deprecated on 2026-04-30 and will be decommissioned on 2026-10-30, after which you will not be able to deploy without upgrading. Consider upgrading now to avoid disruption. See https://cloud.google.com/functions/docs/runtime-support for full details on the lifecycle policy 
+[warn] !  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] !  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2026-04-25T19:29:27.506Z] > [functions] package.json contents: {
+  "name": "functions",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^4.8.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "firebase-functions-test": "^3.1.0"
+  },
+  "private": true
+}
+[debug] [2026-04-25T19:29:27.507Z] Building nodejs source
+[info] i  functions: Loading and analyzing source code for codebase default to determine what to deploy 
+[info] i  functions: You are using a version of firebase-functions SDK (4.9.0) that does not have support for the newest Firebase Extensions features. Please update firebase-functions SDK to >=5.1.0 to use them correctly 
+[debug] [2026-04-25T19:29:27.508Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-04-25T19:29:27.531Z] Found firebase-functions binary at 'C:\Users\Sean\Documents\AntigravityProjects\comehangnow\functions\node_modules\.bin\firebase-functions'
+[info] Serving at port 8182
+
+[debug] [2026-04-25T19:29:28.298Z] Got response from /__/functions.yaml {"endpoints":{"onCheckInCreated":{"platform":"gcfv1","availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"eventTrigger":{"eventType":"providers/cloud.firestore/eventTypes/document.create","eventFilters":{"resource":"projects/clubconnect-ubeew/databases/(default)/documents/checkins/{checkinId}"},"retry":false},"labels":{},"entryPoint":"onCheckInCreated"}},"specVersion":"v1alpha1","requiredAPIs":[]}
+[info] i  functions: preparing functions directory for uploading... 
+[info] i  functions: packaged C:\Users\Sean\Documents\AntigravityProjects\comehangnow\functions (70.94 KB) for uploading 
+[debug] [2026-04-25T19:29:33.379Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:33.379Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:33.379Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/projects/clubconnect-ubeew/locations/-/functions [none]
+[debug] [2026-04-25T19:29:33.964Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/projects/clubconnect-ubeew/locations/-/functions 200
+[debug] [2026-04-25T19:29:33.964Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/projects/clubconnect-ubeew/locations/-/functions {}
+[debug] [2026-04-25T19:29:33.965Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:33.965Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:33.965Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/clubconnect-ubeew/locations/-/functions filter=environment%3D%22GEN_2%22
+[debug] [2026-04-25T19:29:34.370Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/clubconnect-ubeew/locations/-/functions 200
+[debug] [2026-04-25T19:29:34.370Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/clubconnect-ubeew/locations/-/functions {}
+[debug] [2026-04-25T19:29:34.373Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:34.373Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:34.373Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/clubconnect-ubeew [none]
+[debug] [2026-04-25T19:29:34.554Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/clubconnect-ubeew 200
+[debug] [2026-04-25T19:29:34.554Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/clubconnect-ubeew {"projectNumber":"142083257500","projectId":"clubconnect-ubeew","lifecycleState":"ACTIVE","name":"Come Hang Now","labels":{"monospace-workspace-id":"studio-4585403974","firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-06-22T20:29:26.141595Z"}
+[debug] [2026-04-25T19:29:34.555Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:34.555Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:34.555Z] >>> [apiv2][query] POST https://cloudfunctions.googleapis.com/v1/projects/clubconnect-ubeew/locations/us-central1/functions:generateUploadUrl [none]
+[debug] [2026-04-25T19:29:34.556Z] >>> [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/clubconnect-ubeew/locations/us-central1/functions:generateUploadUrl {}
+[debug] [2026-04-25T19:29:43.806Z] <<< [apiv2][status] POST https://cloudfunctions.googleapis.com/v1/projects/clubconnect-ubeew/locations/us-central1/functions:generateUploadUrl 200
+[debug] [2026-04-25T19:29:43.806Z] <<< [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/clubconnect-ubeew/locations/us-central1/functions:generateUploadUrl {"uploadUrl":"https://storage.googleapis.com/uploads-528877500884.us-central1.cloudfunctions.appspot.com/46ab8a8a-d0f7-46b4-898c-a57e143225e1.zip?GoogleAccessId=service-142083257500@gcf-admin-robot.iam.gserviceaccount.com&Expires=1777147183&Signature=WZyOmPy73%2B%2BalOPk1hurFFJXGOz3U2z30v2ePYEwOHuSkvT83UucXSZYgoFwS3WM0VWL3xzaw1utntgwdWsrsKAZGvArj4V8Ip8BZVkYY8U7ZMbsgTALezZBbZZSi309yM2O%2FGoqLOvpgGmi7xDWU01In0pbVJUZDR5Lfy36yiMPzSMtq7uSiyzJ6CyPyV%2FWNAwAtzsinbM30aD11PpFKDe1dxzj%2ByhH6IG5cKrckeRS1KSMM1a%2BPStExgfS15EnHM0gkfuOp%2B8W5CoUN%2FtnPxB0BTrD9vDWEwEaU8V6WGNc2qcPOOphDupfn63jhav0ZwPnyUnlOQ5UFGQujOy70Q%3D%3D"}
+[debug] [2026-04-25T19:29:43.807Z] >>> [apiv2][query] PUT https://storage.googleapis.com/uploads-528877500884.us-central1.cloudfunctions.appspot.com/46ab8a8a-d0f7-46b4-898c-a57e143225e1.zip GoogleAccessId=service-142083257500%40gcf-admin-robot.iam.gserviceaccount.com&Expires=1777147183&Signature=WZyOmPy73%2B%2BalOPk1hurFFJXGOz3U2z30v2ePYEwOHuSkvT83UucXSZYgoFwS3WM0VWL3xzaw1utntgwdWsrsKAZGvArj4V8Ip8BZVkYY8U7ZMbsgTALezZBbZZSi309yM2O%2FGoqLOvpgGmi7xDWU01In0pbVJUZDR5Lfy36yiMPzSMtq7uSiyzJ6CyPyV%2FWNAwAtzsinbM30aD11PpFKDe1dxzj%2ByhH6IG5cKrckeRS1KSMM1a%2BPStExgfS15EnHM0gkfuOp%2B8W5CoUN%2FtnPxB0BTrD9vDWEwEaU8V6WGNc2qcPOOphDupfn63jhav0ZwPnyUnlOQ5UFGQujOy70Q%3D%3D
+[debug] [2026-04-25T19:29:43.807Z] >>> [apiv2][body] PUT https://storage.googleapis.com/uploads-528877500884.us-central1.cloudfunctions.appspot.com/46ab8a8a-d0f7-46b4-898c-a57e143225e1.zip [stream]
+[debug] [2026-04-25T19:29:44.310Z] <<< [apiv2][status] PUT https://storage.googleapis.com/uploads-528877500884.us-central1.cloudfunctions.appspot.com/46ab8a8a-d0f7-46b4-898c-a57e143225e1.zip 200
+[debug] [2026-04-25T19:29:44.310Z] <<< [apiv2][body] PUT https://storage.googleapis.com/uploads-528877500884.us-central1.cloudfunctions.appspot.com/46ab8a8a-d0f7-46b4-898c-a57e143225e1.zip [omitted]
+[info] +  functions: functions source uploaded successfully 
+[info] i  functions: creating Node.js 20 (1st Gen) function onCheckInCreated(us-central1)... 
+[debug] [2026-04-25T19:29:44.314Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:44.314Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:44.314Z] >>> [apiv2][query] POST https://cloudfunctions.googleapis.com/v1/projects/clubconnect-ubeew/locations/us-central1/functions [none]
+[debug] [2026-04-25T19:29:44.314Z] >>> [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/clubconnect-ubeew/locations/us-central1/functions {"name":"projects/clubconnect-ubeew/locations/us-central1/functions/onCheckInCreated","sourceUploadUrl":"https://storage.googleapis.com/uploads-528877500884.us-central1.cloudfunctions.appspot.com/46ab8a8a-d0f7-46b4-898c-a57e143225e1.zip?GoogleAccessId=service-142083257500@gcf-admin-robot.iam.gserviceaccount.com&Expires=1777147183&Signature=WZyOmPy73%2B%2BalOPk1hurFFJXGOz3U2z30v2ePYEwOHuSkvT83UucXSZYgoFwS3WM0VWL3xzaw1utntgwdWsrsKAZGvArj4V8Ip8BZVkYY8U7ZMbsgTALezZBbZZSi309yM2O%2FGoqLOvpgGmi7xDWU01In0pbVJUZDR5Lfy36yiMPzSMtq7uSiyzJ6CyPyV%2FWNAwAtzsinbM30aD11PpFKDe1dxzj%2ByhH6IG5cKrckeRS1KSMM1a%2BPStExgfS15EnHM0gkfuOp%2B8W5CoUN%2FtnPxB0BTrD9vDWEwEaU8V6WGNc2qcPOOphDupfn63jhav0ZwPnyUnlOQ5UFGQujOy70Q%3D%3D","entryPoint":"onCheckInCreated","runtime":"nodejs20","dockerRegistry":"ARTIFACT_REGISTRY","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"b57dc6bb5d03dd77779a78713b50450f50cbf37f"},"eventTrigger":{"eventType":"providers/cloud.firestore/eventTypes/document.create","resource":"projects/clubconnect-ubeew/databases/(default)/documents/checkins/{checkinId}"},"minInstances":null,"maxInstances":null,"ingressSettings":null,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"clubconnect-ubeew\",\"storageBucket\":\"clubconnect-ubeew.firebasestorage.app\"}","GCLOUD_PROJECT":"clubconnect-ubeew","EVENTARC_CLOUD_EVENT_SOURCE":"projects/clubconnect-ubeew/locations/us-central1/functions/onCheckInCreated"},"serviceAccountEmail":null,"availableMemoryMb":null,"timeout":null,"vpcConnector":null,"vpcConnectorEgressSettings":null,"buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""}}
+[debug] [2026-04-25T19:29:44.718Z] <<< [apiv2][status] POST https://cloudfunctions.googleapis.com/v1/projects/clubconnect-ubeew/locations/us-central1/functions 403
+[debug] [2026-04-25T19:29:44.718Z] <<< [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/clubconnect-ubeew/locations/us-central1/functions {"error":{"code":403,"message":"Failed to create 1st Gen function projects/clubconnect-ubeew/locations/us-central1/functions/onCheckInCreated: Unable to retrieve the repository metadata for projects/clubconnect-ubeew/locations/us-central1/repositories/gcf-artifacts. Ensure that the Cloud Functions service account has 'artifactregistry.repositories.list' and 'artifactregistry.repositories.get' permissions. You can add the permissions by granting the role 'roles/artifactregistry.reader'.","status":"PERMISSION_DENIED"}}
+[warn] !  functions: failed to create function projects/clubconnect-ubeew/locations/us-central1/functions/onCheckInCreated 
+[error] Failed to create function projects/clubconnect-ubeew/locations/us-central1/functions/onCheckInCreated
+[warn] !  functions: Deploys failed. Skipping deletes. 
+[debug] [2026-04-25T19:29:44.721Z] Total Function Deployment time: 407
+[debug] [2026-04-25T19:29:44.721Z] 1 Functions Deployed
+[debug] [2026-04-25T19:29:44.721Z] 1 Functions Errored
+[debug] [2026-04-25T19:29:44.721Z] 0 Function Deployments Aborted
+[debug] [2026-04-25T19:29:44.721Z] Average Function Deployment time: 406
+[info] 
+[info] Functions deploy had errors with the following functions:
+	onCheckInCreated(us-central1)
+[debug] [2026-04-25T19:29:44.722Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:44.722Z] Checked if tokens are valid: true, expires at: 1777148906465
+[debug] [2026-04-25T19:29:44.722Z] >>> [apiv2][query] GET https://artifactregistry.googleapis.com/v1/projects/clubconnect-ubeew/locations/us-central1/repositories/gcf-artifacts [none]
+[debug] [2026-04-25T19:29:44.982Z] <<< [apiv2][status] GET https://artifactregistry.googleapis.com/v1/projects/clubconnect-ubeew/locations/us-central1/repositories/gcf-artifacts 404
+[debug] [2026-04-25T19:29:44.982Z] <<< [apiv2][body] GET https://artifactregistry.googleapis.com/v1/projects/clubconnect-ubeew/locations/us-central1/repositories/gcf-artifacts {"error":{"code":404,"message":"Requested entity was not found.","status":"NOT_FOUND"}}
+[debug] [2026-04-25T19:29:44.982Z] Failed to check artifact cleanup policy for region us-central1: Request to https://artifactregistry.googleapis.com/v1/projects/clubconnect-ubeew/locations/us-central1/repositories/gcf-artifacts had HTTP Error: 404, Requested entity was not found. {"name":"FirebaseError","children":[],"context":{"body":{"error":{"code":404,"message":"Requested entity was not found.","status":"NOT_FOUND"}},"response":{"statusCode":404}},"exit":1,"message":"Request to https://artifactregistry.googleapis.com/v1/projects/clubconnect-ubeew/locations/us-central1/repositories/gcf-artifacts had HTTP Error: 404, Requested entity was not found.","status":404}
+[debug] [2026-04-25T19:29:44.983Z] Functions deploy failed.
+[debug] [2026-04-25T19:29:44.983Z] {
+  "endpoint": {
+    "id": "onCheckInCreated",
+    "project": "clubconnect-ubeew",
+    "region": "us-central1",
+    "entryPoint": "onCheckInCreated",
+    "platform": "gcfv1",
+    "runtime": "nodejs20",
+    "eventTrigger": {
+      "eventType": "providers/cloud.firestore/eventTypes/document.create",
+      "retry": false,
+      "eventFilters": {
+        "resource": "projects/clubconnect-ubeew/databases/(default)/documents/checkins/{checkinId}"
+      }
+    },
+    "labels": {
+      "deployment-tool": "cli-firebase"
+    },
+    "serviceAccount": null,
+    "ingressSettings": null,
+    "availableMemoryMb": null,
+    "timeoutSeconds": null,
+    "maxInstances": null,
+    "minInstances": null,
+    "vpc": null,
+    "environmentVariables": {
+      "FIREBASE_CONFIG": "{\"projectId\":\"clubconnect-ubeew\",\"storageBucket\":\"clubconnect-ubeew.firebasestorage.app\"}",
+      "GCLOUD_PROJECT": "clubconnect-ubeew",
+      "EVENTARC_CLOUD_EVENT_SOURCE": "projects/clubconnect-ubeew/locations/us-central1/functions/onCheckInCreated"
+    },
+    "codebase": "default",
+    "targetedByOnly": false,
+    "hash": "b57dc6bb5d03dd77779a78713b50450f50cbf37f"
+  },
+  "op": "create",
+  "original": {
+    "name": "FirebaseError",
+    "children": [],
+    "context": {
+      "function": "projects/clubconnect-ubeew/locations/us-central1/functions/onCheckInCreated"
+    },
+    "exit": 1,
+    "message": "Failed to create function projects/clubconnect-ubeew/locations/us-central1/functions/onCheckInCreated",
+    "original": {
+      "name": "FirebaseError",
+      "children": [],
+      "context": {
+        "body": {
+          "error": {
+            "code": 403,
+            "message": "Failed to create 1st Gen function projects/clubconnect-ubeew/locations/us-central1/functions/onCheckInCreated: Unable to retrieve the repository metadata for projects/clubconnect-ubeew/locations/us-central1/repositories/gcf-artifacts. Ensure that the Cloud Functions service account has 'artifactregistry.repositories.list' and 'artifactregistry.repositories.get' permissions. You can add the permissions by granting the role 'roles/artifactregistry.reader'.",
+            "status": "PERMISSION_DENIED"
+          }
+        },
+        "response": {
+          "statusCode": 403
+        }
+      },
+      "exit": 1,
+      "message": "Request to https://cloudfunctions.googleapis.com/v1/projects/clubconnect-ubeew/locations/us-central1/functions had HTTP Error: 403, Failed to create 1st Gen function projects/clubconnect-ubeew/locations/us-central1/functions/onCheckInCreated: Unable to retrieve the repository metadata for projects/clubconnect-ubeew/locations/us-central1/repositories/gcf-artifacts. Ensure that the Cloud Functions service account has 'artifactregistry.repositories.list' and 'artifactregistry.repositories.get' permissions. You can add the permissions by granting the role 'roles/artifactregistry.reader'.",
+      "status": 403
+    },
+    "status": 403,
+    "code": 403
+  }
+}
+[debug] [2026-04-25T19:29:44.984Z] Error: Failed to create function onCheckInCreated in region us-central1
+    at C:\Users\Sean\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:54:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async Fabricator.createV1Function (C:\Users\Sean\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:207:32)
+    at async Fabricator.createEndpoint (C:\Users\Sean\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:150:13)
+    at async Fabricator.wrapOperation (C:\Users\Sean\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:138:13)
+    at async Promise.all (index 0)
+    at async Promise.allSettled (index 0)
+    at async Fabricator.applyPlan (C:\Users\Sean\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:77:45)
+    at async release (C:\Users\Sean\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\firebase-tools\lib\deploy\functions\release\index.js:87:21)
+    at async chain (C:\Users\Sean\AppData\Local\npm-cache\_npx\7750544ccf494d8b\node_modules\firebase-tools\lib\deploy\index.js:45:9)
+[error] 
+[error] Error: There was an error deploying functions

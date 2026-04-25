@@ -1,11 +1,10 @@
-
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, sendPasswordResetEmail, UserCredential } from 'firebase/auth';
-import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc, writeBatch, query, getDocs, getDoc, arrayUnion } from "firebase/firestore";
-import { auth, db } from '@/lib/firebase';
-import { admins } from '@/lib/data';
+import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, setDoc, writeBatch, query, getDocs, getDoc, arrayUnion, where } from "firebase/firestore";
+import { auth, db, messaging } from '@/lib/firebase';
+import { getToken } from 'firebase/messaging';
 import type { Family, FamilyMember, ClubLocation, ClubSettings, OperatingHours } from '@/lib/types';
 import { useToast } from './use-toast';
 import { useClubSettings } from './use-club-settings';
@@ -15,7 +14,6 @@ interface AuthContextType {
   family: Family | null;
   allFamilies: Family[];
   familyMember: FamilyMember | null;
-  isAdmin: boolean;
   loading: boolean;
   signInWithGoogle: () => Promise<UserCredential>;
   signInWithEmail: (email: string, password: string) => Promise<UserCredential>;
@@ -26,12 +24,13 @@ interface AuthContextType {
   createFamily: (familyName: string) => void;
   updateClubSettings: (newSettings: Partial<ClubSettings>) => Promise<void>;
   deleteFamily: (familyId: string) => Promise<void>;
-  addLocation: (locationData: Omit<ClubLocation, 'id' | 'order'>) => Promise<void>;
+  addLocation: (locationData: Omit<ClubLocation, 'id' | 'order' | 'clubId'>) => Promise<void>;
   updateLocation: (location: Omit<ClubLocation, 'order'>) => Promise<void>;
   deleteLocation: (locationId: string) => Promise<void>;
   moveLocation: (currentIndex: number, direction: 'up' | 'down') => Promise<void>;
   addUserToFamily: (user: User, familyId: string) => Promise<{ success: boolean; message?: string } | undefined>;
   updateNotificationPreferences: (familyIdToToggle: string, subscribe: boolean) => void;
+  requestNotificationPermission: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -41,11 +40,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [family, setFamily] = useState<Family | null>(null);
   const [allFamilies, setAllFamilies] = useState<Family[]>([]);
   const [familyMember, setFamilyMember] = useState<FamilyMember | null>(null);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [authLoading, setAuthLoading] = useState<boolean>(true);
   const [familiesLoading, setFamiliesLoading] = useState<boolean>(true);
   const { toast } = useToast();
-  const { locations } = useClubSettings();
+  const { locations, clubId, isAdmin } = useClubSettings();
 
   // Auth state listener
   useEffect(() => {
@@ -55,13 +53,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
         setUser(user);
-        if (user) {
-            setIsAdmin(admins.includes(user.email || ''));
-        } else {
+        if (!user) {
             // Clear all user-specific data on logout
             setFamily(null);
             setFamilyMember(null);
-            setIsAdmin(false);
             setAllFamilies([]);
         }
         setAuthLoading(false);
@@ -69,15 +64,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribeAuth();
   }, []);
 
-  // Fetch families (private)
+  // Fetch families (private, scoped to clubId)
   useEffect(() => {
-    if (!db || !user) {
+    if (!db || !user || !clubId) {
         setFamiliesLoading(false);
+        setAllFamilies([]);
         return;
     }
     setFamiliesLoading(true);
-    const familiesCollection = collection(db, "families");
-    const unsubscribeFamilies = onSnapshot(familiesCollection, (snapshot) => {
+    const familiesQuery = query(collection(db, "families"), where("clubId", "==", clubId));
+    const unsubscribeFamilies = onSnapshot(familiesQuery, (snapshot) => {
         const familiesData = snapshot.docs.map(doc => ({ ...doc.data() as Omit<Family, 'id'>, id: doc.id }));
         setAllFamilies(familiesData);
         setFamiliesLoading(false);
@@ -87,7 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribeFamilies();
-  }, [user, db]);
+  }, [user, db, clubId]);
 
   // Derive user's family and member info
   useEffect(() => {
@@ -143,7 +139,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!auth) throw new Error("Firebase not configured.");
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: name });
-      // Re-set user to trigger profile update
       setUser({ ...userCredential.user, displayName: name });
       return userCredential;
   };
@@ -170,7 +165,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const createFamily = async (familyName: string) => {
-    if (!user || !db) return;
+    if (!user || !db || !clubId) return;
 
     const newFamilyMember: FamilyMember = {
         id: `mem${Date.now()}`,
@@ -181,6 +176,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const newFamily: Omit<Family, 'id'> = {
+        clubId: clubId,
         name: familyName,
         members: [newFamilyMember]
     };
@@ -189,10 +185,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const updateClubSettings = async (newSettings: Partial<ClubSettings>) => {
-    if (!db || !isAdmin) return;
-    const settingsDocRef = doc(db, "clubSettings", "main");
+    if (!db || !isAdmin || !clubId) return;
+    const settingsDocRef = doc(db, "clubs", clubId);
     try {
         await setDoc(settingsDocRef, newSettings, { merge: true });
+        toast({ title: "Settings updated" });
     } catch (error: any) {
         console.error("Error updating settings:", error);
         toast({ title: "Error updating settings", description: error.message, variant: "destructive" });
@@ -210,11 +207,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const addLocation = async (locationData: Omit<ClubLocation, 'id' | 'order'>) => {
-    if (!db || !isAdmin) return;
+  const addLocation = async (locationData: Omit<ClubLocation, 'id' | 'order' | 'clubId'>) => {
+    if (!db || !isAdmin || !clubId) return;
     try {
         const newLocationData = {
             ...locationData,
+            clubId: clubId,
             order: locations.length
         };
         await addDoc(collection(db, "locations"), newLocationData);
@@ -239,7 +237,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!db || !isAdmin) return;
     try {
         await deleteDoc(doc(db, "locations", locationId));
-        // Note: This leaves a gap in the `order` sequence, which is fine.
         toast({ title: "Location deleted" });
     } catch (error: any) {
         toast({ title: "Error deleting location", description: error.message, variant: "destructive" });
@@ -274,9 +271,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addUserToFamily = async (user: User, familyId: string) => {
-    if (!db || !user.email) return;
+    if (!db || !user.email || !clubId) return;
 
-    const familiesSnapshot = await getDocs(collection(db, "families"));
+    const familiesQuery = query(collection(db, "families"), where("clubId", "==", clubId));
+    const familiesSnapshot = await getDocs(familiesQuery);
     for (const doc of familiesSnapshot.docs) {
         const family = doc.data() as Family;
         if (family.members.some(m => m.email === user.email)) {
@@ -287,8 +285,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const familyDocRef = doc(db, "families", familyId);
     const familyDoc = await getDoc(familyDocRef);
 
-    if (!familyDoc.exists()) {
-        return { success: false, message: "Invalid invitation link. The family may have been deleted." };
+    if (!familyDoc.exists() || familyDoc.data()?.clubId !== clubId) {
+        return { success: false, message: "Invalid invitation link. The family may have been deleted or is not in this club." };
     }
 
     const newMember: FamilyMember = {
@@ -333,9 +331,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     updateFamilyData(updatedFamily);
   };
 
+  const requestNotificationPermission = async () => {
+    if (!family || !familyMember || !messaging) {
+        console.log("Cannot request notification permissions: missing family or messaging instance");
+        return;
+    }
+    
+    try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            const token = await getToken(messaging, { vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY });
+            if (token) {
+                const currentTokens = familyMember.fcmTokens || [];
+                if (!currentTokens.includes(token)) {
+                    const updatedMembers = family.members.map(m => {
+                        if (m.id === familyMember.id) {
+                            return { ...m, fcmTokens: [...(m.fcmTokens || []), token] };
+                        }
+                        return m;
+                    });
+                    await updateFamilyData({ ...family, members: updatedMembers });
+                    toast({ title: "Notifications enabled!" });
+                }
+            }
+        } else {
+            toast({ title: "Notifications denied", description: "You must enable notifications in your browser settings to receive push alerts.", variant: "destructive" });
+        }
+    } catch (error) {
+        console.error("Failed to request notification permission", error);
+    }
+  };
+
   const loading = authLoading || (!!user && familiesLoading);
 
-  const value = { user, family, allFamilies, familyMember, isAdmin, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, sendPasswordReset, updateFamilyData, createFamily, updateClubSettings, deleteFamily, addLocation, updateLocation, deleteLocation, moveLocation, addUserToFamily, updateNotificationPreferences };
+  const value = { user, family, allFamilies, familyMember, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut, sendPasswordReset, updateFamilyData, createFamily, updateClubSettings, deleteFamily, addLocation, updateLocation, deleteLocation, moveLocation, addUserToFamily, updateNotificationPreferences, requestNotificationPermission };
 
   return (
     <AuthContext.Provider value={value}>

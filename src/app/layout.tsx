@@ -6,8 +6,9 @@ import { Header } from '@/components/header';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/hooks/use-auth';
 import { ClubSettingsProvider } from '@/hooks/use-club-settings';
-import { getDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { headers } from 'next/headers';
 import { ClubSettings } from '@/lib/types';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -16,11 +17,20 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 
   try {
+    const headersList = await headers();
+    const host = headersList.get('host') || 'localhost';
+    const hostname = host.split(':')[0]; // strip port
+    
+    // Use env override for local dev testing
+    const clubDomain = process.env.NEXT_PUBLIC_DEV_CLUB_DOMAIN && (hostname === 'localhost' || hostname === '127.0.0.1')
+      ? process.env.NEXT_PUBLIC_DEV_CLUB_DOMAIN 
+      : hostname;
+
     if (db) {
-      const settingsDocRef = doc(db, "clubSettings", "main");
-      const docSnap = await getDoc(settingsDocRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
+      const clubsQuery = query(collection(db, "clubs"), where("domain", "==", clubDomain));
+      const querySnapshot = await getDocs(clubsQuery);
+      if (!querySnapshot.empty) {
+        const data = querySnapshot.docs[0].data();
         clubSettings.name = data.name || "Come Hang Now";
       }
     }
@@ -76,12 +86,21 @@ export default function RootLayout({
             __html: `
               if ("serviceWorker" in navigator) {
                 window.addEventListener("load", () => {
-                  navigator.serviceWorker.register("/sw.js").then(
+                  const firebaseConfig = {
+                    apiKey: "${process.env.NEXT_PUBLIC_FIREBASE_API_KEY || ''}",
+                    authDomain: "${process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || ''}",
+                    projectId: "${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || ''}",
+                    storageBucket: "${process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || ''}",
+                    messagingSenderId: "${process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || ''}",
+                    appId: "${process.env.NEXT_PUBLIC_FIREBASE_APP_ID || ''}"
+                  };
+                  const encodedConfig = encodeURIComponent(JSON.stringify(firebaseConfig));
+                  navigator.serviceWorker.register("/firebase-messaging-sw.js?firebaseConfig=" + encodedConfig).then(
                     (registration) => {
-                      console.log("Service Worker registration successful with scope: ", registration.scope);
+                      console.log("FCM Service Worker registration successful with scope: ", registration.scope);
                     },
                     (err) => {
-                      console.log("Service Worker registration failed: ", err);
+                      console.log("FCM Service Worker registration failed: ", err);
                     }
                   );
                 });

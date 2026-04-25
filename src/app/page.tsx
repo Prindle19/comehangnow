@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
   const { user, family, allFamilies, loading: authLoading } = useAuth();
-  const { clubSettings, settingsLoading, locations, locationsLoading } = useClubSettings();
+  const { clubId, clubSettings, settingsLoading, locations, locationsLoading } = useClubSettings();
   const [allCheckIns, setAllCheckIns] = React.useState<CheckIn[]>([]);
   const [activeCheckIns, setActiveCheckIns] = React.useState<CheckIn[]>([]);
   const [isCheckInDialogOpen, setCheckInDialogOpen] = React.useState(false);
@@ -29,12 +29,12 @@ export default function Home() {
   const loading = authLoading || settingsLoading || locationsLoading;
 
   React.useEffect(() => {
-    if (!user || !db) {
+    if (!user || !db || !clubId) {
       setAllCheckIns([]);
       return;
     }
-    const checkInsCollection = collection(db, "checkins");
-    const unsubscribe = onSnapshot(checkInsCollection, (snapshot) => {
+    const checkInsQuery = query(collection(db, "checkins"), where("clubId", "==", clubId));
+    const unsubscribe = onSnapshot(checkInsQuery, (snapshot) => {
       const checkinsData = snapshot.docs.map((docSnapshot) => {
         const data = docSnapshot.data();
         return {
@@ -117,7 +117,9 @@ export default function Home() {
     const now = new Date();
     const checkOutTime = new Date(now.getTime() + durationMinutes * 60000);
 
+    if (!clubId) return;
     const newCheckInData = {
+      clubId,
       familyId,
       memberIds,
       locationId,

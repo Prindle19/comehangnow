@@ -1,12 +1,20 @@
 
 import { NextResponse } from 'next/server';
-import { getDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { ClubSettings } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const host = request.headers.get('host') || 'localhost';
+  const hostname = host.split(':')[0]; // strip port
+  
+  // Use env override for local dev testing
+  const clubDomain = process.env.NEXT_PUBLIC_DEV_CLUB_DOMAIN && (hostname === 'localhost' || hostname === '127.0.0.1')
+    ? process.env.NEXT_PUBLIC_DEV_CLUB_DOMAIN 
+    : hostname;
+
   const defaultSettings = {
     name: "Come Hang Now",
     logoUrl192: "https://placehold.co/192x192/87ceeb/ffffff.png?text=Hang",
@@ -16,10 +24,10 @@ export async function GET() {
 
   try {
     if (db) {
-      const settingsDocRef = doc(db, "clubSettings", "main");
-      const docSnap = await getDoc(settingsDocRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
+      const clubsQuery = query(collection(db, "clubs"), where("domain", "==", clubDomain));
+      const querySnapshot = await getDocs(clubsQuery);
+      if (!querySnapshot.empty) {
+        const data = querySnapshot.docs[0].data();
         clubSettings = {
             name: data.name,
             logoUrl: data.logoUrl,

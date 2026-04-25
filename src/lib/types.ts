@@ -1,5 +1,12 @@
-
 import type { Timestamp } from "firebase/firestore";
+
+export type ClubSettings = {
+  id?: string;
+  domain?: string;
+  name: string;
+  logoUrl?: string;
+  admins?: string[];
+};
 
 export type FamilyMember = {
   id: string;
@@ -8,10 +15,12 @@ export type FamilyMember = {
   email: string;
   role: 'owner' | 'member';
   notificationSubscriptions?: string[];
+  fcmTokens?: string[];
 };
 
 export type Family = {
-  id:string;
+  id: string;
+  clubId?: string;
   name: string;
   members: FamilyMember[];
 };
@@ -39,7 +48,8 @@ export type OperatingHours = {
 
 export type ClubLocation = {
   id: string;
-  name:string;
+  clubId?: string;
+  name: string;
   icon: string;
   order: number;
   operatingHours: OperatingHours;
@@ -47,6 +57,7 @@ export type ClubLocation = {
 
 export type CheckIn = {
   id: string;
+  clubId?: string;
   familyId: string;
   memberIds: string[];
   locationId: string;
