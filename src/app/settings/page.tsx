@@ -182,6 +182,14 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg border">
+                <div>
+                  <h3 className="font-medium">System Notifications</h3>
+                  <p className="text-sm text-muted-foreground">Allow your browser to receive push alerts.</p>
+                </div>
+                <Button onClick={requestNotificationPermission}>Enable Push Notifications</Button>
+              </div>
+
               {allFamilies.filter(f => f.id !== family?.id).map((fam) => {
                 const isSubscribed = familyMember?.notificationSubscriptions?.includes(fam.id) || false;
                 return (
