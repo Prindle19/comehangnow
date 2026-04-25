@@ -36,7 +36,7 @@ type ClubSettingsFormValues = z.infer<typeof ClubSettingsSchema>;
 
 
 export default function SettingsPage() {
-  const { user, family, allFamilies, updateClubSettings, deleteFamily, loading: authLoading, addLocation, updateLocation, deleteLocation, moveLocation, familyMember, updateNotificationPreferences } = useAuth();
+  const { user, family, allFamilies, updateClubSettings, deleteFamily, loading: authLoading, addLocation, updateLocation, deleteLocation, moveLocation, familyMember, updateNotificationPreferences, requestNotificationPermission } = useAuth();
   const { isAdmin, clubSettings, settingsLoading, locations, locationsLoading } = useClubSettings();
   const { toast } = useToast();
   const [familyToDelete, setFamilyToDelete] = React.useState<Family | null>(null);
